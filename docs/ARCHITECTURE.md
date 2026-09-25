@@ -1,46 +1,35 @@
-# System Architecture — VTO (VALORANT Tournament Operations System)
+# System Architecture & Subagent Coordination — VTO
 
-## 1. High-Level Overview
-VTO is a dedicated LAN tournament operations platform engineered specifically for competitive VALORANT events held in university computing labs, esports arenas, and gaming centers.
+## 1. High-Level Architecture
+VTO is an enterprise LAN tournament operations platform engineered specifically for competitive VALORANT events. It is structured into strict horizontal layers and vertical workstreams to allow parallel agent execution without file contention.
 
 ```mermaid
 graph TD
-    User([Tournament Staff]) --> UI[Next.js App Router UI]
-    
-    subgraph Frontend Subsystems
-        AdminUI[Admin Control Center: /admin]
-        VolunteerUI[Mobile Match Marshal: /volunteer]
-        DisplayUI[Projector Display Board: /display]
-    end
+    ClientAdmin[Admin Control Center: /admin] --> API[Next.js Server Actions & API Routes]
+    ClientMarshal[Volunteer Marshal: /volunteer] --> API
+    ClientDisplay[Projector TV: /display/:id] --> API
 
-    UI --> AdminUI
-    UI --> VolunteerUI
-    UI --> DisplayUI
-
-    subgraph Server & Application Services
-        ServerActions[Next.js Server Actions & API Routes]
+    subgraph Service & Orchestration Layer
         AuthService[Auth & RBAC Service]
         AuditService[Audit Log Service]
         TournamentService[Tournament & Team Service]
         SchedulingService[Scheduling & Resource Service]
         IncidentService[Incident & Penalty Service]
+        ExportService[Report & Export Service]
     end
 
-    AdminUI --> ServerActions
-    VolunteerUI --> ServerActions
-    DisplayUI --> ServerActions
+    API --> AuthService
+    API --> AuditService
+    API --> TournamentService
+    API --> SchedulingService
+    API --> IncidentService
+    API --> ExportService
 
-    ServerActions --> AuthService
-    ServerActions --> AuditService
-    ServerActions --> TournamentService
-    ServerActions --> SchedulingService
-    ServerActions --> IncidentService
-
-    subgraph Pure Domain Engines
-        BracketEngine[Bracket Engine: Seeding & BYEs]
+    subgraph Pure Domain Engines Zero DB / React Dependencies
+        BracketEngine[Bracket Engine: Single Elim, Round Robin, Groups]
         SchedulingEngine[Scheduling Engine: Lab/PC Resource Matrix]
-        StateEngine[Match & Tournament State Machine]
-        ValidatorEngine[Pre-Finalization Validation Pipeline]
+        StateEngine[State Machine: Match & Tournament Guards]
+        ValidatorEngine[Pre-Flight 10-Point Validator]
     end
 
     TournamentService --> BracketEngine
@@ -48,108 +37,48 @@ graph TD
     TournamentService --> ValidatorEngine
     SchedulingService --> SchedulingEngine
 
-    subgraph Persistence Layer
-        PrismaORM[Prisma ORM Client]
-        PostgreSQL[(PostgreSQL Database)]
+    subgraph Data & Persistence Layer
+        RepoAdapter[Repository / Adapter Interface]
+        PrismaORM[Prisma Client: PostgreSQL]
+        MemoryStore[In-Memory Transactional Store]
     end
 
-    TournamentService --> PrismaORM
-    SchedulingService --> PrismaORM
-    IncidentService --> PrismaORM
-    AuditService --> PrismaORM
-    PrismaORM --> PostgreSQL
+    TournamentService --> RepoAdapter
+    SchedulingService --> RepoAdapter
+    IncidentService --> RepoAdapter
+    AuditService --> RepoAdapter
+    RepoAdapter --> PrismaORM
+    RepoAdapter --> MemoryStore
 ```
 
 ---
 
-## 2. Core Subsystems
+## 2. Multi-Agent Workstream Boundaries & File Ownership
+To allow parallel subagents to operate concurrently without merge conflicts or overlapping edits, files and responsibilities are partitioned into **12 Independent Workstreams**:
 
-### 2.1 Pure Domain Engines (`src/lib/`)
-Zero dependency on Next.js, React, or database drivers. Pure, deterministic, easily testable logic:
-1. **Bracket Engine (`src/lib/tournament/`)**:
-   - Single Elimination, Round Robin, Group Stage + Knockout.
-   - Standard competitive seeding (1 vs 2^k, 2 vs 2^k-1, etc.).
-   - Deterministic BYE assignment to highest seeds.
-   - Result advancement propagation to dependent bracket nodes.
-2. **Scheduling Engine (`src/lib/scheduling/`)**:
-   - Dynamic match capacity calculation: `capacity = sum(floor(working_pcs_in_lab / 10))` capped by configured stations.
-   - Time-slot and station allocation with strict conflict avoidance.
-   - Hard constraints: No double-booked teams, stations, or overlapping PC sets.
-   - Soft constraints: Minimize wait time, balance lab usage, avoid back-to-back fatigue.
-3. **State Transition Engine (`src/lib/tournament/state-machine.ts`)**:
-   - Explicit finite state machines for Tournament and Match lifecycles.
-   - Guard conditions preventing illegal transitions.
-4. **Validation Pipeline (`src/lib/tournament/validator.ts`)**:
-   - 10-point checklist before tournament finalization: team count, player completeness, station health, PC threshold, fixture validity, volunteer allocation.
-
-### 2.2 Service Layer (`src/services/`)
-Orchestrates operations, coordinates Prisma database transactions, and guarantees audit trail persistence:
-- `tournament.service.ts`: CRUD, team management, bracket generation execution, finalization lock/unlock.
-- `venue.service.ts`: Venues, labs, stations, PCs, real-time availability updates.
-- `match.service.ts`: Match lifecycle operations (Call, Ready, Start, Pause, Score submission, Official verification, Forfeit).
-- `attendance.service.ts`: Real-time roster verification, player check-in, substitution management.
-- `incident.service.ts`: Incident ticket tracking, technical pause logging, penalty application.
-- `audit.service.ts`: Immutable transaction logs with actor, entity, and diff snapshots.
-
-### 2.3 User Interfaces
-- **Admin Control Center (`/admin`)**:
-  - Live Overview Dashboard with real-time stats and alerts.
-  - Interactive Bracket Visualizer with zoom and match node drill-down.
-  - Lab & Station Layout Designer with PC health indicators.
-  - Fixture Generator & Timeline View.
-  - Incident Desk & Audit Log Explorer.
-- **Mobile Volunteer Portal (`/volunteer`)**:
-  - Designed for smartphones held by marshals standing behind player booths.
-  - Big 48px+ action buttons, low cognitive load.
-  - One-tap Match Call, Start, Technical Pause, and Score Entry.
-- **Public TV/Projector Display (`/display/:id`)**:
-  - Full-screen high-contrast scoreboard and bracket tree.
-  - Live station status (e.g. Lab 1 - Station 2: MAP 1 - T1 vs T2 [7-5]).
-  - Read-only, zero administrative buttons.
+| Workstream | Subagent Role | Primary File Ownership | Prohibited Edits |
+|---|---|---|---|
+| **WS1: Architecture & Contracts** | Lead Architect | `docs/*`, `GEMINI.md`, `src/types/` | Implementation files |
+| **WS2: Database & Models** | Database Engineer | `prisma/schema.prisma`, `prisma/seed.ts` | UI components |
+| **WS3: Tournament Engine** | Algorithm Engineer | `src/lib/tournament/bracket.ts`, `round-robin.ts`, `group-stage.ts` | DB queries, UI |
+| **WS4: Scheduling Engine** | Resource Engineer | `src/lib/scheduling/capacity.ts`, `scheduler.ts`, `heuristics.ts` | UI, Auth |
+| **WS5: State & Validation** | Integrity Engineer | `src/lib/tournament/state-machine.ts`, `validator.ts` | Database schema |
+| **WS6: Backend Services & API**| Backend Engineer | `src/services/*`, `src/app/api/**` | UI JSX, CSS |
+| **WS7: Admin Desktop UI** | Frontend Engineer | `src/app/(admin)/**`, `src/components/tournament/**` | Domain engine math |
+| **WS8: Lab & Hardware UI** | Hardware UI Engineer | `src/components/venue/**`, `src/app/(admin)/admin/venues/**` | Fixture algorithms |
+| **WS9: Mobile Volunteer Portal**| Mobile/UX Engineer | `src/app/volunteer/**`, `src/components/volunteer/**` | Desktop admin views |
+| **WS10: Incidents & Penalties** | Operations Lead | `src/components/operations/incident-desk.tsx`, `src/services/incident.service.ts` | Lab hardware grids |
+| **WS11: TV Display & Exports** | Media & Reports Engineer| `src/app/display/**`, `src/services/export.service.ts` | Live control toggles |
+| **WS12: QA & Verification** | QA & Simulation Auditor| `tests/**`, `scripts/simulate-tournament.ts` | Production core logic |
 
 ---
 
-## 3. Data Flow & Mutation Pipeline
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Volunteer as Match Marshal
-    actor Admin as Result Official
-    participant App as Next.js Server Action
-    participant Guard as RBAC & Zod Validator
-    participant Service as MatchService
-    participant Engine as BracketEngine
-    participant DB as Prisma / Postgres
-    participant Audit as AuditLog
-
-    Volunteer->>App: submitMatchResult(matchId, scores, evidence)
-    App->>Guard: Verify Marshal Role & Schema
-    Guard-->>App: OK
-    App->>Service: processResultSubmission()
-    Service->>DB: Update Match (status: RESULT_PENDING)
-    Service->>Audit: Log RESULT_SUBMITTED
-    DB-->>Volunteer: Success (Awaiting Official Verification)
-
-    Admin->>App: verifyMatchResult(matchId, verifiedScores)
-    App->>Guard: Verify RESULT_OFFICIAL / SUPER_ADMIN Role
-    Guard-->>App: OK
-    App->>Service: verifyAndAdvanceWinner()
-    rect rgb(20, 30, 45)
-        Note over Service,DB: Executed in prisma.$transaction
-        Service->>DB: Update Match (status: VERIFIED, winnerId)
-        Service->>Engine: computeNextBracketNode(match, winnerId)
-        Engine-->>Service: nextMatchId, slot (TeamA or TeamB)
-        Service->>DB: Update Next Match (slot: winnerId)
-        Service->>DB: Release Station & PCs (status: AVAILABLE)
-        Service->>Audit: Log RESULT_VERIFIED & BRACKET_ADVANCED
-    end
-    DB-->>Admin: Success (Winner Advanced to Round 2)
-```
-
----
-
-## 4. Key Invariants & Safeguards
-1. **No Phantom Advancements**: A match result can never propagate to the next round until an authorized Official verifies the result.
-2. **Resource Reservation**: A station cannot host another match until its previous match is marked `FINISHED` or `CANCELLED`.
-3. **Locking**: Once a tournament is `FINALIZED`, fixtures and team rosters cannot be modified without an explicit Super Admin unlock reason.
+## 3. Data Mutation Flow & Concurrency Controls
+1. **Zero UI Mutation Logic**: UI components must never perform score calculations, seed placements, or capacity divisions directly. All state transitions must flow through API route handlers and domain engines.
+2. **Audit Guarantee**: Every state alteration generates an immutable audit record containing:
+   - `actorId` and `actorRole`
+   - `action` (e.g. `MATCH_PAUSED`, `RESULT_VERIFIED`, `PC_OFFLINE`)
+   - `entity` and `entityId`
+   - `details` (human readable summary + structured diff)
+   - `timestamp` (ISO 8601 UTC)
+3. **Locking Invariant**: When a tournament transitions to `FINALIZED`, bracket regeneration and fixture rescheduling endpoints are hard-blocked by `validateTournamentTransition` unless accompanied by an authorized Super Admin unlock reason.

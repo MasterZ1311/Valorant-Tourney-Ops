@@ -20,35 +20,15 @@ This document governs the engineering standards, architecture, and operational r
 
 ---
 
-### 2. Coding Standards & Naming Conventions
-- **TypeScript**: Strict mode enabled (`strict: true`, `noImplicitAny: true`). No `any` types; use precise discriminated unions for statuses and state transitions.
-- **Naming**:
-  - Files: `kebab-case.ts` / `kebab-case.tsx` (e.g. `bracket-generator.ts`, `match-card.tsx`).
-  - React Components: `PascalCase` (e.g. `MatchCard`, `LabConfigGrid`).
-  - Functions & Variables: `camelCase` (e.g. `generateSingleEliminationBracket`, `availablePcs`).
-  - Constants & Enums: `UPPER_SNAKE_CASE` (e.g. `MATCH_STATES`, `PC_STATUS`).
-  - Interfaces/Types: `PascalCase` (e.g. `TournamentFixture`, `BracketNode`).
-- **File Structure**:
-  ```
-  src/
-  ├── app/                  # Next.js App Router (pages, layouts, route handlers)
-  │   ├── (admin)/          # Admin operations dashboard & configuration
-  │   ├── volunteer/        # Mobile-first match marshal / volunteer routes
-  │   ├── display/          # Read-only public TV / projector screen
-  │   └── api/              # RESTful API endpoints for external or decoupled services
-  ├── components/           # UI components (shadcn/ui + custom tournament widgets)
-  │   ├── ui/               # Base primitives (button, dialog, card, badge, table)
-  │   ├── tournament/       # Brackets, match boards, fixture tables
-  │   ├── venue/            # Lab, station, and PC management grids
-  │   └── operations/       # Live match controls, incidents, penalties, announcements
-  ├── lib/                  # Pure domain engines & utilities
-  │   ├── tournament/       # Bracket algorithms, formats, BYE placement, advancement
-  │   ├── scheduling/       # Resource allocation, PC constraints, conflict detection
-  │   ├── validation/       # Zod schemas (tournament, match, team, venue, incident)
-  │   └── db.ts             # Prisma client singleton
-  ├── services/             # Application services (DB transactions, audit logging)
-  └── types/                # Core domain types & Prisma re-exports
-  ```
+### 2. Multi-Agent Workstream Invariants
+1. **Strict File Ownership**:
+   - Parallel subagents must operate strictly within their assigned workstream files (see `docs/ROADMAP.md`).
+   - Shared contract files (`src/lib/tournament/types.ts`, `prisma/schema.prisma`) must only be modified by the Principal Architect / Database lead.
+2. **Non-Destructive Operations**:
+   - Never delete or overwrite working domain engine algorithms or test suites.
+   - Extend functionality via modular files (e.g. `round-robin.ts`, `group-stage.ts`) rather than mutating existing tested implementations.
+3. **Verification Before PR Merge**:
+   - Any workstream completion requires: `npx tsc --noEmit` (0 errors), `npm test` (all tests pass), and `npm run build` (clean compilation).
 
 ---
 
