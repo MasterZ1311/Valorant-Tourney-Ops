@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { ScheduledFixture } from "@/lib/scheduling/types";
 import { BracketStructure } from "@/lib/tournament/types";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { Trophy, Monitor, Clock, Activity, ShieldCheck } from "lucide-react";
+import { Trophy, Monitor, Clock, Activity, ShieldCheck, Award, Medal } from "lucide-react";
 import { formatTime } from "@/lib/utils";
 
 export default function DisplayProjectorPage({
@@ -16,6 +16,8 @@ export default function DisplayProjectorPage({
     tournament: any;
     bracket: BracketStructure | null;
     fixtures: ScheduledFixture[];
+    stage1Schedule?: any;
+    iplPlayoffs?: any;
     stats: any;
   } | null>(null);
   const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
@@ -50,6 +52,7 @@ export default function DisplayProjectorPage({
   const liveMatches = data.fixtures.filter((f) => f.status === "LIVE" || f.status === "PAUSED");
   const upcomingMatches = data.fixtures.filter((f) => f.status === "SCHEDULED" || f.status === "READY" || f.status === "CALLED");
   const completedMatches = data.fixtures.filter((f) => f.status === "VERIFIED" && !f.isBye);
+  const iplRankings = data.iplPlayoffs?.rankings;
 
   return (
     <div className="min-h-screen bg-[#0a0f14] text-gray-100 p-6 md:p-10 flex flex-col justify-between select-none">
@@ -64,9 +67,9 @@ export default function DisplayProjectorPage({
               {data.tournament.name}
             </h1>
             <p className="text-xs font-mono text-gray-400 mt-1 flex items-center gap-3">
-              <span>{data.tournament.venueName}</span>
+              <span className="text-white font-bold">AI Lab (30 PCs) & Meta lab (10 PCs)</span>
               <span>•</span>
-              <span className="text-[#ff4655] font-bold">VALORANT LAN CHAMPIONSHIP</span>
+              <span className="text-[#ff4655] font-bold">STAGE 1: 13 TEAMS • IPL PLAYOFFS</span>
             </p>
           </div>
         </div>
@@ -74,7 +77,7 @@ export default function DisplayProjectorPage({
         <div className="flex items-center gap-6">
           <div className="text-right">
             <div className="text-[10px] uppercase font-bold text-gray-400 tracking-widest">
-              Live Arena Time
+              Live Arena Clock
             </div>
             <div className="text-xl font-mono font-bold text-white">
               {lastRefreshed.toLocaleTimeString()}
@@ -82,26 +85,72 @@ export default function DisplayProjectorPage({
           </div>
           <div className="flex items-center gap-2 bg-[#17202a] px-3.5 py-2 rounded-lg border border-[#2b3844]">
             <span className="h-3 w-3 rounded-full bg-red-500 animate-ping"></span>
-            <span className="text-xs uppercase font-mono font-black text-red-400">BROADCAST FEED</span>
+            <span className="text-xs uppercase font-mono font-black text-red-400">PROJECTOR BROADCAST</span>
           </div>
         </div>
       </header>
 
+      {/* Prize Podium Banner */}
+      {iplRankings && (
+        <div className="my-6 bg-[#17202a] border border-[#2b3844] rounded-xl p-4">
+          <div className="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center gap-2 mb-3">
+            <Trophy className="h-4 w-4" /> Championship Prize Rankings (IPL Playoff Decider)
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="bg-[#0f1923] p-2.5 rounded border border-amber-500/40 text-center">
+              <div className="text-[10px] font-bold uppercase text-amber-400 flex items-center justify-center gap-1">
+                <Trophy className="h-3 w-3" /> 1st (Gold Prize)
+              </div>
+              <div className="text-xs font-black text-white mt-1 truncate">
+                {iplRankings.firstPlace?.name || "TBD (Final Winner)"}
+              </div>
+            </div>
+
+            <div className="bg-[#0f1923] p-2.5 rounded border border-slate-400/40 text-center">
+              <div className="text-[10px] font-bold uppercase text-slate-300 flex items-center justify-center gap-1">
+                <Medal className="h-3 w-3" /> 2nd (Silver Prize)
+              </div>
+              <div className="text-xs font-black text-white mt-1 truncate">
+                {iplRankings.secondPlace?.name || "TBD (Runner-Up)"}
+              </div>
+            </div>
+
+            <div className="bg-[#0f1923] p-2.5 rounded border border-amber-700/40 text-center">
+              <div className="text-[10px] font-bold uppercase text-amber-600 flex items-center justify-center gap-1">
+                <Award className="h-3 w-3" /> 3rd (Bronze Prize)
+              </div>
+              <div className="text-xs font-black text-white mt-1 truncate">
+                {iplRankings.thirdPlace?.name || "TBD (Q2 Decider)"}
+              </div>
+            </div>
+
+            <div className="bg-[#0f1923] p-2.5 rounded border border-[#2b3844] text-center">
+              <div className="text-[10px] font-bold uppercase text-gray-500">
+                4th Place
+              </div>
+              <div className="text-xs font-black text-white mt-1 truncate">
+                {iplRankings.fourthPlace?.name || "TBD (Eliminator)"}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main Grid: Live Stations + Upcoming Schedule + Bracket Standings */}
-      <main className="grid grid-cols-1 lg:grid-cols-12 gap-8 my-8 flex-1">
+      <main className="grid grid-cols-1 lg:grid-cols-12 gap-8 my-4 flex-1">
         {/* Left Column: Live Matches on Stations */}
         <div className="lg:col-span-7 space-y-6">
           <div>
             <h2 className="text-sm font-black uppercase tracking-wider text-red-400 flex items-center gap-2 mb-4">
               <Activity className="h-5 w-5" />
-              Live Arena Stations ({liveMatches.length} Active)
+              Live Arena Stations ({liveMatches.length} Active Across AI Lab & Meta lab)
             </h2>
 
             {liveMatches.length === 0 ? (
               <div className="bg-[#17202a] border border-[#2b3844] rounded-xl p-8 text-center text-gray-400">
                 <Clock className="h-8 w-8 text-gray-500 mx-auto mb-2" />
-                <div className="text-base font-bold text-white">No Matches Currently In Progress</div>
-                <div className="text-xs text-gray-500 mt-1">Upcoming matches are warming up in team stations.</div>
+                <div className="text-base font-bold text-white">Stations In Preparation / Warm-Up</div>
+                <div className="text-xs text-gray-500 mt-1">Teams are assembling at AI Lab and Meta lab stations.</div>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -146,7 +195,7 @@ export default function DisplayProjectorPage({
           <div>
             <h2 className="text-sm font-black uppercase tracking-wider text-gray-400 flex items-center gap-2 mb-3">
               <Clock className="h-4 w-4" />
-              Upcoming Matches On Deck
+              On Deck Match Schedule
             </h2>
 
             <div className="bg-[#17202a] border border-[#2b3844] rounded-xl overflow-hidden divide-y divide-[#2b3844]">
@@ -227,7 +276,7 @@ export default function DisplayProjectorPage({
       {/* Footer */}
       <footer className="border-t border-[#2b3844] pt-4 flex items-center justify-between text-[11px] text-gray-500">
         <span>VALORANT TOURNAMENT OPERATIONS SYSTEM (VTO) • HIGH CADENCE LAN EDITION</span>
-        <span className="font-mono">STATUS: SYNCHRONIZED</span>
+        <span className="font-mono">STATUS: BROADCAST LIVE</span>
       </footer>
     </div>
   );

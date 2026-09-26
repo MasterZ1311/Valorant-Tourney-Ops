@@ -18,6 +18,8 @@ export async function GET(
   const bracket = store.getBracket(params.id);
   const fixtures = store.getFixtures(params.id);
   const incidents = store.getIncidents(params.id);
+  const stage1Schedule = store.getStage1Schedule(params.id);
+  const iplPlayoffs = store.getIPLPlayoffs(params.id);
 
   // Summary counts
   const checkedInCount = teams.filter((t) => t.status === "CHECKED_IN").length;
@@ -43,6 +45,8 @@ export async function GET(
       },
       bracket,
       fixtures,
+      stage1Schedule,
+      iplPlayoffs,
       venueMetrics,
     },
   });

@@ -8,12 +8,14 @@ import {
   Monitor,
   Activity,
   Calendar,
-  AlertTriangle,
   CheckCircle2,
   Clock,
   Layers,
   ArrowRight,
   ShieldAlert,
+  Sparkles,
+  Award,
+  Medal,
 } from "lucide-react";
 import Link from "next/link";
 import { formatTime } from "@/lib/utils";
@@ -25,39 +27,38 @@ export default function AdminDashboardPage() {
   const tournament = store.getTournament(tournamentId);
   const teams = store.getTeams(tournamentId);
   const venueMetrics = store.getVenueMetrics(tournamentId);
-  const fixtures = store.getFixtures(tournamentId);
+  const stage1Schedule = store.getStage1Schedule(tournamentId);
+  const iplPlayoffs = store.getIPLPlayoffs(tournamentId) || store.initIPLPlayoffs(tournamentId);
   const incidents = store.getIncidents(tournamentId);
-  const bracket = store.getBracket(tournamentId);
 
   if (!tournament) {
     return <div className="p-8 text-white">Tournament not found</div>;
   }
 
   const checkedInCount = teams.filter((t) => t.status === "CHECKED_IN").length;
-  const playableMatches = fixtures.filter((f) => !f.isBye);
-  const completedMatches = playableMatches.filter((f) => f.status === "VERIFIED").length;
-  const liveMatches = playableMatches.filter((f) => f.status === "LIVE" || f.status === "PAUSED").length;
+  const playedCount = teams.filter((t) => t.hasPlayed).length;
+  const awaitingCount = teams.length - playedCount;
+  const activeMatches = stage1Schedule.allMatches.filter((m) => m.status === "Live" || m.status === "Paused").length;
   const openIncidents = incidents.filter((i) => i.status !== "RESOLVED" && i.status !== "DISMISSED");
 
-  const upcomingFixtures = playableMatches
-    .filter((f) => f.status === "SCHEDULED" || f.status === "READY" || f.status === "CALLED")
-    .slice(0, 4);
+  const slot1 = stage1Schedule.slots[0];
+  const slot2 = stage1Schedule.slots[1];
 
   return (
     <div className="space-y-8">
       {/* Header Banner */}
-      <div className="flex flex-wrap items-center justify-between gap-4 bg-[#17202a] border border-[#2b3844] rounded-xl p-6">
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-[#17202a] border border-[#2b3844] rounded-xl p-6 shadow-xl">
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-black text-white">{tournament.name}</h1>
             <StatusBadge status={tournament.status} />
           </div>
-          <p className="text-xs text-gray-400 mt-1 flex items-center gap-3">
-            <span>{tournament.venueName}</span>
+          <p className="text-xs text-gray-400 mt-1 flex flex-wrap items-center gap-3">
+            <span className="text-white font-bold">AI Lab (30 PCs) & Meta lab (10 PCs)</span>
             <span>•</span>
-            <span>Date: {tournament.date}</span>
+            <span>Stage 1: 13 Teams (6 Matches + 1 BYE)</span>
             <span>•</span>
-            <span>Format: {tournament.format.replace(/_/g, " ")}</span>
+            <span className="text-amber-400 font-bold">IPL Playoffs for 3 Prize Ranks</span>
           </p>
         </div>
 
@@ -71,65 +72,27 @@ export default function AdminDashboardPage() {
 
       {/* Primary KPI Metrics Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {/* Teams & Attendance */}
+        {/* Teams & Stage 1 Status */}
         <div className="bg-[#17202a] border border-[#2b3844] rounded-xl p-4 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">
-              Teams & Attendance
+              Stage 1 Teams
             </span>
             <Users className="h-4 w-4 text-[#ff4655]" />
           </div>
           <div className="mt-3">
             <div className="text-2xl font-black text-white">
-              {checkedInCount} / {teams.length}
+              {teams.length} Teams
             </div>
             <div className="text-xs text-gray-400 mt-0.5">
-              {checkedInCount === teams.length ? (
-                <span className="text-emerald-400 flex items-center gap-1">
-                  <CheckCircle2 className="h-3 w-3" /> 100% Present
-                </span>
-              ) : (
-                <span className="text-amber-400">
-                  {teams.length - checkedInCount} Pending Check-in
-                </span>
-              )}
+              <span className="text-amber-400 font-bold">{awaitingCount} Awaiting 1st Match</span>
             </div>
           </div>
           <Link
             href="/admin/teams"
             className="text-[11px] font-bold text-gray-400 hover:text-white mt-3 flex items-center gap-1"
           >
-            Manage Attendance <ArrowRight className="h-3 w-3" />
-          </Link>
-        </div>
-
-        {/* Live & Completed Matches */}
-        <div className="bg-[#17202a] border border-[#2b3844] rounded-xl p-4 flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">
-              Matches Progress
-            </span>
-            <Activity className="h-4 w-4 text-emerald-400" />
-          </div>
-          <div className="mt-3">
-            <div className="text-2xl font-black text-white">
-              {completedMatches} / {playableMatches.length}
-            </div>
-            <div className="text-xs text-gray-400 mt-0.5">
-              {liveMatches > 0 ? (
-                <span className="text-red-400 font-bold flex items-center gap-1 animate-pulse">
-                  <Activity className="h-3 w-3" /> {liveMatches} Currently LIVE
-                </span>
-              ) : (
-                <span>0 Live Matches</span>
-              )}
-            </div>
-          </div>
-          <Link
-            href="/admin/matches"
-            className="text-[11px] font-bold text-gray-400 hover:text-white mt-3 flex items-center gap-1"
-          >
-            Open Live Control Desk <ArrowRight className="h-3 w-3" />
+            Manage Attendance ({checkedInCount}/{teams.length}) <ArrowRight className="h-3 w-3" />
           </Link>
         </div>
 
@@ -143,171 +106,264 @@ export default function AdminDashboardPage() {
           </div>
           <div className="mt-3">
             <div className="text-2xl font-black text-white">
-              {venueMetrics.operationalStations} Stations
+              4 Matches / Slot
             </div>
             <div className="text-xs text-gray-400 mt-0.5">
-              {venueMetrics.totalWorkingPCs} / {venueMetrics.totalConfiguredPCs} PCs Active (
-              {venueMetrics.maxSimultaneousMatches} Matches Max)
+              AI Lab (3) + Meta lab (1) = 40 PCs
             </div>
           </div>
           <Link
             href="/admin/venues"
             className="text-[11px] font-bold text-gray-400 hover:text-white mt-3 flex items-center gap-1"
           >
-            View Lab Layouts <ArrowRight className="h-3 w-3" />
+            Configure Labs <ArrowRight className="h-3 w-3" />
           </Link>
         </div>
 
-        {/* Technical & Conduct Incidents */}
+        {/* Live Matches */}
         <div className="bg-[#17202a] border border-[#2b3844] rounded-xl p-4 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">
-              Active Incidents
+              Live Control Desk
             </span>
-            <ShieldAlert className="h-4 w-4 text-amber-400" />
+            <Activity className="h-4 w-4 text-emerald-400" />
           </div>
           <div className="mt-3">
             <div className="text-2xl font-black text-white">
-              {openIncidents.length} Open
+              {activeMatches > 0 ? (
+                <span className="text-red-400 animate-pulse">{activeMatches} Live</span>
+              ) : (
+                <span>Ready to Call</span>
+              )}
             </div>
             <div className="text-xs text-gray-400 mt-0.5">
-              {openIncidents.length === 0 ? (
-                <span className="text-emerald-400 flex items-center gap-1">
-                  <CheckCircle2 className="h-3 w-3" /> Zero Open Issues
-                </span>
-              ) : (
-                <span className="text-amber-400">
-                  {openIncidents.length} Under Investigation
-                </span>
-              )}
+              {playedCount} Matches Concluded
             </div>
           </div>
           <Link
-            href="/admin/incidents"
+            href="/admin/matches"
             className="text-[11px] font-bold text-gray-400 hover:text-white mt-3 flex items-center gap-1"
           >
-            Incident Desk <ArrowRight className="h-3 w-3" />
+            Open Match Controller <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
+
+        {/* IPL 3-Place Prize Decider */}
+        <div className="bg-[#17202a] border border-[#2b3844] rounded-xl p-4 flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">
+              Prize Podium (IPL)
+            </span>
+            <Trophy className="h-4 w-4 text-amber-400" />
+          </div>
+          <div className="mt-3">
+            <div className="text-2xl font-black text-amber-400">
+              3 Ranks
+            </div>
+            <div className="text-xs text-gray-400 mt-0.5">
+              Q1 • Eliminator • Q2 • Final
+            </div>
+          </div>
+          <Link
+            href="/admin/bracket"
+            className="text-[11px] font-bold text-gray-400 hover:text-white mt-3 flex items-center gap-1"
+          >
+            View IPL Bracket <ArrowRight className="h-3 w-3" />
           </Link>
         </div>
       </div>
 
-      {/* Main Split: Live Schedule Queue & Quick Action Station */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Next Matches Queue */}
-        <div className="lg:col-span-8 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-base font-black text-white flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-[#ff4655]" />
-              Scheduled Fixture Timeline
-            </h3>
-            <Link
-              href="/admin/fixtures"
-              className="text-xs font-bold text-[#ff4655] hover:underline"
-            >
-              View All Fixtures ({playableMatches.length})
-            </Link>
+      {/* Prize Podium Showcase Card */}
+      <div className="bg-[#17202a] border border-[#2b3844] rounded-xl p-6 space-y-4">
+        <div className="flex items-center justify-between border-b border-[#2b3844]/60 pb-3">
+          <div className="flex items-center gap-2">
+            <Trophy className="h-5 w-5 text-amber-400" />
+            <h2 className="text-base font-black text-white">
+              Championship Prize Rankings (IPL Playoff Format)
+            </h2>
           </div>
-
-          <div className="bg-[#17202a] border border-[#2b3844] rounded-xl overflow-hidden divide-y divide-[#2b3844]/60">
-            {upcomingFixtures.length === 0 ? (
-              <div className="p-8 text-center text-gray-400 text-xs">
-                No upcoming matches in queue.
-              </div>
-            ) : (
-              upcomingFixtures.map((f) => (
-                <div key={f.matchId} className="p-4 flex items-center justify-between hover:bg-[#1f2731]/40 transition-colors">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs font-bold text-gray-400">
-                        {f.matchCode}
-                      </span>
-                      <span className="text-xs text-gray-500">• {f.roundName}</span>
-                    </div>
-                    <div className="text-sm font-bold text-white flex items-center gap-2">
-                      <span className="text-emerald-400">{f.teamAName}</span>
-                      <span className="text-gray-500 text-xs">vs</span>
-                      <span className="text-blue-400">{f.teamBName}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-4 text-xs">
-                    <div className="text-right hidden sm:block">
-                      <div className="font-mono text-gray-300">{formatTime(f.startTime)}</div>
-                      <div className="text-[10px] text-gray-500">{f.stationName}</div>
-                    </div>
-                    <StatusBadge status={f.status} />
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+          <Link
+            href="/admin/bracket"
+            className="text-xs font-bold text-amber-400 hover:underline flex items-center gap-1"
+          >
+            Interactive Playoff Desk <ArrowRight className="h-3 w-3" />
+          </Link>
         </div>
 
-        {/* Quick Operations Sidebar */}
-        <div className="lg:col-span-4 space-y-5">
-          <div className="bg-[#17202a] border border-[#2b3844] rounded-xl p-5 space-y-4">
-            <h3 className="text-sm font-black uppercase tracking-wider text-white">
-              Operations Center
-            </h3>
-
-            <div className="space-y-2">
-              <Link
-                href="/admin/matches"
-                className="w-full py-2.5 px-3 rounded-lg bg-[#ff4655] hover:bg-[#e03d4b] text-white font-bold text-xs uppercase tracking-wider flex items-center justify-between transition-colors shadow-md shadow-[#ff4655]/20"
-              >
-                <span>Live Match Controller</span>
-                <Activity className="h-4 w-4" />
-              </Link>
-
-              <Link
-                href="/volunteer"
-                className="w-full py-2.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-between transition-colors"
-              >
-                <span>Mobile Volunteer View</span>
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-
-              <Link
-                href="/display/vto-tourney-1"
-                target="_blank"
-                className="w-full py-2.5 px-3 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-between transition-colors"
-              >
-                <span>Projector Scoreboard</span>
-                <ArrowRight className="h-4 w-4" />
-              </Link>
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+          <div className="bg-[#0f1923] p-3 rounded-lg border border-amber-500/30 text-center">
+            <div className="text-[10px] uppercase font-bold text-amber-400 flex items-center justify-center gap-1">
+              <Trophy className="h-3.5 w-3.5" /> 1st Place (Gold Prize)
+            </div>
+            <div className="text-sm font-black text-white mt-1 truncate">
+              {iplPlayoffs.rankings.firstPlace?.name || "TBD (Final Winner)"}
             </div>
           </div>
 
-          {/* Bracket Snapshot */}
-          <div className="bg-[#17202a] border border-[#2b3844] rounded-xl p-5 space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-black uppercase tracking-wider text-gray-400">
-                Bracket Snapshot
-              </h3>
-              <Link href="/admin/bracket" className="text-xs text-[#ff4655] font-bold hover:underline">
-                Explore Tree
-              </Link>
+          <div className="bg-[#0f1923] p-3 rounded-lg border border-slate-500/30 text-center">
+            <div className="text-[10px] uppercase font-bold text-slate-300 flex items-center justify-center gap-1">
+              <Medal className="h-3.5 w-3.5" /> 2nd Place (Silver Prize)
             </div>
-
-            <div className="text-xs text-gray-300 space-y-1.5">
-              <div className="flex justify-between">
-                <span>Format:</span>
-                <span className="font-bold text-white">Single Elimination</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Bracket Size:</span>
-                <span className="font-bold text-white">{bracket?.bracketSize || 16} Slots</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Rounds:</span>
-                <span className="font-bold text-white">{bracket?.totalRounds || 4} Total</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Automatic BYEs:</span>
-                <span className="font-bold text-white">{bracket?.totalBYEs || 3} Teams</span>
-              </div>
+            <div className="text-sm font-black text-white mt-1 truncate">
+              {iplPlayoffs.rankings.secondPlace?.name || "TBD (Final Runner-Up)"}
             </div>
           </div>
+
+          <div className="bg-[#0f1923] p-3 rounded-lg border border-amber-700/30 text-center">
+            <div className="text-[10px] uppercase font-bold text-amber-600 flex items-center justify-center gap-1">
+              <Award className="h-3.5 w-3.5" /> 3rd Place (Bronze Prize)
+            </div>
+            <div className="text-sm font-black text-white mt-1 truncate">
+              {iplPlayoffs.rankings.thirdPlace?.name || "TBD (Loser Qualifier 2)"}
+            </div>
+          </div>
+
+          <div className="bg-[#0f1923] p-3 rounded-lg border border-[#2b3844] text-center">
+            <div className="text-[10px] uppercase font-bold text-gray-500">
+              4th Place (Eliminator)
+            </div>
+            <div className="text-sm font-black text-white mt-1 truncate">
+              {iplPlayoffs.rankings.fourthPlace?.name || "TBD (Loser Eliminator)"}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Stage 1 Schedule Snapshot: Time Slot 1 & Time Slot 2 */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-black text-white flex items-center gap-2">
+            <Calendar className="h-5 w-5 text-[#ff4655]" />
+            Stage 1 Time Slot Fixtures (13 Teams)
+          </h2>
+          <Link
+            href="/admin/fixtures"
+            className="text-xs font-bold text-[#ff4655] hover:underline"
+          >
+            Full Stage 1 Console & Team Swapper →
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Time Slot 1 */}
+          {slot1 && (
+            <div className="bg-[#17202a] border border-[#2b3844] rounded-xl p-5 space-y-3">
+              <div className="flex items-center justify-between border-b border-[#2b3844]/60 pb-2">
+                <span className="text-sm font-black text-white flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-[#ff4655]"></span>
+                  Time Slot 1 (4 Matches Max)
+                </span>
+                <span className="text-[11px] font-mono text-emerald-400 font-bold bg-emerald-950/60 px-2 py-0.5 rounded">
+                  100% Station Utilization
+                </span>
+              </div>
+
+              <div className="space-y-2">
+                {slot1.matches.map((m) => (
+                  <div
+                    key={m.matchId}
+                    className="p-2.5 rounded-lg bg-[#0f1923] border border-[#2b3844] flex items-center justify-between text-xs"
+                  >
+                    <div>
+                      <div className="text-[10px] font-mono text-gray-500">
+                        {m.labName} — {m.stationName}
+                      </div>
+                      <div className="font-bold text-white mt-0.5">
+                        <span className="text-emerald-400">{m.teamA?.name}</span>
+                        <span className="text-gray-500 mx-1.5 text-[10px]">vs</span>
+                        <span className="text-blue-400">{m.teamB?.name}</span>
+                      </div>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-[#17202a] text-gray-300">
+                      {m.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Time Slot 2 */}
+          {slot2 && (
+            <div className="bg-[#17202a] border border-[#2b3844] rounded-xl p-5 space-y-3">
+              <div className="flex items-center justify-between border-b border-[#2b3844]/60 pb-2">
+                <span className="text-sm font-black text-white flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-blue-400"></span>
+                  Time Slot 2 (2 Matches + 1 BYE + 1 Unused)
+                </span>
+                <span className="text-[11px] font-mono text-gray-400 font-bold bg-[#0f1923] px-2 py-0.5 rounded">
+                  2 Matches Active
+                </span>
+              </div>
+
+              <div className="space-y-2">
+                {slot2.matches.map((m) => {
+                  if (m.isBye) {
+                    return (
+                      <div
+                        key={m.matchId}
+                        className="p-2.5 rounded-lg bg-[#1e172a] border border-purple-500/40 flex items-center justify-between text-xs"
+                      >
+                        <div>
+                          <div className="text-[10px] font-mono text-purple-400">
+                            {m.labName} — {m.stationName}
+                          </div>
+                          <div className="font-bold text-white mt-0.5">
+                            {m.teamA?.name}
+                          </div>
+                        </div>
+                        <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-purple-900/60 text-purple-300 border border-purple-500/40">
+                          Stage 1 BYE
+                        </span>
+                      </div>
+                    );
+                  }
+
+                  if (m.isUnused) {
+                    return (
+                      <div
+                        key={m.matchId}
+                        className="p-2.5 rounded-lg bg-[#0f1923]/40 border border-dashed border-[#2b3844] flex items-center justify-between text-xs opacity-60"
+                      >
+                        <div>
+                          <div className="text-[10px] font-mono text-gray-500">
+                            {m.labName} — {m.stationName}
+                          </div>
+                          <div className="text-gray-400 mt-0.5 italic">
+                            Unoccupied / Warm-up Station
+                          </div>
+                        </div>
+                        <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-gray-800 text-gray-500">
+                          UNUSED
+                        </span>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div
+                      key={m.matchId}
+                      className="p-2.5 rounded-lg bg-[#0f1923] border border-[#2b3844] flex items-center justify-between text-xs"
+                    >
+                      <div>
+                        <div className="text-[10px] font-mono text-gray-500">
+                          {m.labName} — {m.stationName}
+                        </div>
+                        <div className="font-bold text-white mt-0.5">
+                          <span className="text-emerald-400">{m.teamA?.name}</span>
+                          <span className="text-gray-500 mx-1.5 text-[10px]">vs</span>
+                          <span className="text-blue-400">{m.teamB?.name}</span>
+                        </div>
+                      </div>
+                      <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-[#17202a] text-gray-300">
+                        {m.status}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

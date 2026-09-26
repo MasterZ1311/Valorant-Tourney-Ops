@@ -5,6 +5,21 @@ import { generateSingleEliminationBracket, advanceBracketWinner } from "../tourn
 import { generateFixtures } from "../scheduling/scheduler";
 import { runPreFinalizationValidation, ValidationReport } from "../tournament/validator";
 import { validateTournamentTransition, validateMatchTransition } from "../tournament/state-machine";
+import {
+  Stage1ScheduleResult,
+  Stage1MatchSlot,
+  Stage1MatchStatus,
+  generateStage1Schedule,
+  getDefaultStage1Config,
+  swapStage1Teams as swapStage1TeamsEngine,
+  recalculateLabCapacity,
+} from "../scheduling/stage1-fixtures";
+import {
+  IPLPlayoffStructure,
+  IPLPrizeRankings,
+  generateIPLPlayoffs,
+  advanceIPLPlayoffResult,
+} from "../tournament/ipl-playoffs";
 
 export interface StoredTournament {
   id: string;
@@ -44,6 +59,7 @@ export interface StoredTeam {
   seed: number;
   status: "REGISTERED" | "CHECKED_IN" | "INCOMPLETE" | "READY" | "PLAYING" | "QUALIFIED" | "ELIMINATED" | "DISQUALIFIED" | "NO_SHOW";
   checkedInAt?: string;
+  hasPlayed?: boolean;
   players: StoredPlayer[];
 }
 
@@ -81,6 +97,8 @@ class TournamentStore {
   private labs: Map<string, DomainLab[]> = new Map(); // tournamentId -> labs
   private brackets: Map<string, BracketStructure> = new Map(); // tournamentId -> bracket
   private fixtures: Map<string, ScheduledFixture[]> = new Map(); // tournamentId -> fixtures
+  private stage1Schedules: Map<string, Stage1ScheduleResult> = new Map(); // tournamentId -> stage1Schedule
+  private iplPlayoffs: Map<string, IPLPlayoffStructure> = new Map(); // tournamentId -> iplPlayoffs
   private incidents: Map<string, StoredIncident[]> = new Map(); // tournamentId -> incidents
   private auditLogs: StoredAuditLog[] = [];
 
@@ -93,9 +111,9 @@ class TournamentStore {
     const now = new Date();
     const tourney: StoredTournament = {
       id: tourneyId,
-      name: "VALORANT Campus Championship 2026",
+      name: "VALORANT 5v5 Internal Tournament",
       game: "VALORANT",
-      venueName: "University Tech Arena & LAN Center",
+      venueName: "Campus Gaming Complex (AI Lab & Meta lab)",
       date: now.toISOString().split("T")[0],
       startTime: "10:00",
       status: "READY",
@@ -106,39 +124,42 @@ class TournamentStore {
     };
     this.tournaments.set(tourneyId, tourney);
 
-    // Seed 13 Teams with 5 players each
-    const defaultTeams: StoredTeam[] = [
-      "Sentinels Academy",
-      "Fnatic Rising",
-      "Paper Rex Youth",
-      "Team Liquid Echo",
-      "DRX Vision",
-      "LOUD Genesis",
-      "Evil Geniuses Nova",
-      "NRG Orbit",
-      "Karmine Corp Blue",
-      "Team Heretics Next",
-      "BBL Queens",
-      "Leviatan Vanguard",
-      "ZETA Division Spark",
-    ].map((name, i) => {
+    // Official 13 Teams
+    const official13TeamNames = [
+      "XARAN",
+      "Muthusipi Orchestra",
+      "Eclipse",
+      "Tenzor",
+      "ESP (espada)",
+      "Error4O4",
+      "TEAM VORTEX",
+      "VALORANT NOOBS",
+      "Skull Krushers",
+      "x",
+      "Goodie Gang",
+      "TEAM EREN",
+      "Kawai",
+    ];
+
+    const defaultTeams: StoredTeam[] = official13TeamNames.map((name, i) => {
       const teamId = `team-${i + 1}`;
       return {
         id: teamId,
         tournamentId: tourneyId,
         name,
-        captain: `Captain ${i + 1}`,
+        captain: `Captain ${name.replace(/\s+/g, "")}`,
         captainContact: `+1-555-010${i + 1}`,
-        institution: `University of Esports ${i + 1}`,
+        institution: `Campus Esports Club`,
         seed: i + 1,
         status: "CHECKED_IN",
         checkedInAt: now.toISOString(),
+        hasPlayed: false,
         players: Array.from({ length: 5 }, (_, p) => ({
           id: `${teamId}-p${p + 1}`,
           teamId,
           name: `${name} Player ${p + 1}`,
-          riotId: `Player${p + 1}`,
-          riotTag: name.substring(0, 3).toUpperCase(),
+          riotId: `${name.replace(/[^a-zA-Z0-9]/g, "").slice(0, 8)}P${p + 1}`,
+          riotTag: "VAL",
           role: p === 0 ? "CAPTAIN" : "STARTER",
           verified: true,
           present: true,
@@ -147,12 +168,14 @@ class TournamentStore {
     });
     this.teams.set(tourneyId, defaultTeams);
 
-    // Seed Labs: Lab 1 (30 PCs, 3 stations), Lab 2 (10 PCs, 1 station)
+    // Physical Infrastructure:
+    // AI Lab: 30 PCs, 3 stations (10 PCs each: Match 1, Match 2, Match 3)
+    // Meta lab: 10 PCs, 1 station (10 PCs: Match 1)
     const lab1Stations: DomainStation[] = [1, 2, 3].map((s) => ({
       id: `lab-1-st-${s}`,
-      name: `Station ${s}`,
+      name: `Match ${s}`,
       labId: "lab-1",
-      labName: "Lab 1 (North Hall)",
+      labName: "AI Lab",
       requiredPCs: 10,
       pcs: [],
       isOperational: true,
@@ -172,7 +195,7 @@ class TournamentStore {
     });
     const lab1: DomainLab = {
       id: "lab-1",
-      name: "Lab 1 (North Hall)",
+      name: "AI Lab",
       totalPcs: 30,
       stations: lab1Stations,
       operationalStationsCount: 3,
@@ -182,9 +205,9 @@ class TournamentStore {
     const lab2Stations: DomainStation[] = [
       {
         id: `lab-2-st-1`,
-        name: `Station 1`,
+        name: `Match 1`,
         labId: "lab-2",
-        labName: "Lab 2 (South Arena)",
+        labName: "Meta lab",
         requiredPCs: 10,
         pcs: [],
         isOperational: true,
@@ -204,7 +227,7 @@ class TournamentStore {
     });
     const lab2: DomainLab = {
       id: "lab-2",
-      name: "Lab 2 (South Arena)",
+      name: "Meta lab",
       totalPcs: 10,
       stations: lab2Stations,
       operationalStationsCount: 1,
@@ -213,10 +236,9 @@ class TournamentStore {
 
     this.labs.set(tourneyId, [lab1, lab2]);
 
-    // Generate Initial Bracket and Fixtures
-    const bracket = generateSingleEliminationBracket(
-      defaultTeams.map((t) => ({ id: t.id, name: t.name, seed: t.seed }))
-    );
+    // Generate Standard Bracket & Fixtures
+    const participants = defaultTeams.map((t) => ({ id: t.id, name: t.name, seed: t.seed }));
+    const bracket = generateSingleEliminationBracket(participants);
     this.brackets.set(tourneyId, bracket);
 
     const fixturesResult = generateFixtures(bracket, [...lab1.stations, ...lab2.stations], {
@@ -225,6 +247,15 @@ class TournamentStore {
       bufferDurationMinutes: 15,
     });
     this.fixtures.set(tourneyId, fixturesResult.fixtures);
+
+    // Generate Stage 1 Slot Schedule (13 Teams across AI Lab & Meta lab)
+    const stage1Config = getDefaultStage1Config("2026-10-15T10:00:00.000Z");
+    const stage1Schedule = generateStage1Schedule(tourneyId, participants, stage1Config);
+    this.stage1Schedules.set(tourneyId, stage1Schedule);
+
+    // Initialize IPL Playoffs structure with top 4 seeds
+    const ipl = generateIPLPlayoffs(tourneyId, participants.slice(0, 4));
+    this.iplPlayoffs.set(tourneyId, ipl);
 
     this.incidents.set(tourneyId, []);
     this.auditLogs.push({
@@ -235,7 +266,7 @@ class TournamentStore {
       action: "TOURNAMENT_INITIALIZED",
       entity: "Tournament",
       entityId: tourneyId,
-      details: "Default tournament created with 13 teams and 4 stations",
+      details: "Tournament initialized with 13 official teams, AI Lab (30 PCs), and Meta lab (10 PCs).",
       timestamp: now.toISOString(),
     });
   }
@@ -256,7 +287,7 @@ class TournamentStore {
       id,
       name: data.name || "New VALORANT Tournament",
       game: "VALORANT",
-      venueName: data.venueName || "Main Campus Lab",
+      venueName: data.venueName || "AI Lab & Meta lab Complex",
       date: data.date || now.split("T")[0],
       startTime: data.startTime || "10:00",
       status: "DRAFT",
@@ -313,9 +344,10 @@ class TournamentStore {
       name: teamData.name || `Team ${teams.length + 1}`,
       captain: teamData.captain || "Captain",
       captainContact: teamData.captainContact || "",
-      institution: teamData.institution || "College",
+      institution: teamData.institution || "Campus Esports",
       seed: teamData.seed || teams.length + 1,
       status: "REGISTERED",
+      hasPlayed: false,
       players: teamData.players || [],
     };
     teams.push(newTeam);
@@ -389,6 +421,68 @@ class TournamentStore {
     return calculateVenueCapacity(labs);
   }
 
+  updateVenueLabConfig(
+    tournamentId: string,
+    labId: string,
+    totalPcs: number,
+    name?: string
+  ): DomainLab[] {
+    const labs = this.getLabs(tournamentId);
+    const lab = labs.find((l) => l.id === labId);
+    if (!lab) throw new Error(`Lab ${labId} not found`);
+
+    if (name) lab.name = name;
+    lab.totalPcs = totalPcs;
+
+    // Recalculate stations: 1 station per 10 PCs
+    const matchSlots = Math.floor(totalPcs / 10);
+    const newStations: DomainStation[] = [];
+    const newPcs: DomainPC[] = [];
+
+    for (let s = 1; s <= matchSlots; s++) {
+      const stationId = `${labId}-st-${s}`;
+      const stPcs: DomainPC[] = [];
+      for (let p = 1; p <= 10; p++) {
+        const pcIndex = (s - 1) * 10 + p;
+        const pc: DomainPC = {
+          id: `${labId}-pc-${pcIndex}`,
+          pcNumber: `PC-${pcIndex}`,
+          labId,
+          stationId,
+          status: "AVAILABLE",
+        };
+        stPcs.push(pc);
+        newPcs.push(pc);
+      }
+      newStations.push({
+        id: stationId,
+        name: `Match ${s}`,
+        labId,
+        labName: lab.name,
+        requiredPCs: 10,
+        pcs: stPcs,
+        isOperational: true,
+        workingPcCount: 10,
+      });
+    }
+
+    lab.stations = newStations;
+    lab.operationalStationsCount = matchSlots;
+    lab.workingPcCount = matchSlots * 10;
+
+    this.labs.set(tournamentId, labs);
+    this.logAudit(
+      tournamentId,
+      "admin",
+      "SUPER_ADMIN",
+      "CONFIG_LAB",
+      "Lab",
+      labId,
+      `Updated ${lab.name}: ${totalPcs} PCs, ${matchSlots} match slots.`
+    );
+    return labs;
+  }
+
   // --- Bracket & Fixtures ---
   getBracket(tournamentId: string): BracketStructure | null {
     return this.brackets.get(tournamentId) || null;
@@ -430,6 +524,271 @@ class TournamentStore {
     this.fixtures.set(tournamentId, result.fixtures);
     this.logAudit(tournamentId, actorId, actorRole, "GENERATE_FIXTURES", "Fixtures", tournamentId, `Generated ${result.fixtures.length} fixtures`);
     return result.fixtures;
+  }
+
+  // --- Stage 1 Slot Schedule Engine ---
+  getStage1Schedule(tournamentId: string): Stage1ScheduleResult {
+    let schedule = this.stage1Schedules.get(tournamentId);
+    if (!schedule) {
+      const teams = this.getTeams(tournamentId).map((t) => ({ id: t.id, name: t.name, seed: t.seed }));
+      const config = getDefaultStage1Config();
+      schedule = generateStage1Schedule(tournamentId, teams, config);
+      this.stage1Schedules.set(tournamentId, schedule);
+    }
+    return schedule;
+  }
+
+  regenerateStage1Schedule(
+    tournamentId: string,
+    customByeTeamId?: string,
+    customPairings?: { teamAId: string; teamBId: string }[]
+  ): Stage1ScheduleResult {
+    const teams = this.getTeams(tournamentId).map((t) => ({ id: t.id, name: t.name, seed: t.seed }));
+    const config = getDefaultStage1Config();
+    const schedule = generateStage1Schedule(tournamentId, teams, config, {
+      customByeTeamId,
+      customPairings,
+    });
+    this.stage1Schedules.set(tournamentId, schedule);
+    this.logAudit(
+      tournamentId,
+      "admin",
+      "SUPER_ADMIN",
+      "REGENERATE_STAGE1_SCHEDULE",
+      "Schedule",
+      tournamentId,
+      `Regenerated Stage 1 schedule (${schedule.slots.length} time slots)`
+    );
+    return schedule;
+  }
+
+  swapStage1Teams(
+    tournamentId: string,
+    matchIdA: string,
+    slotA: "TEAM_A" | "TEAM_B",
+    matchIdB: string,
+    slotB: "TEAM_A" | "TEAM_B"
+  ): Stage1ScheduleResult {
+    const schedule = this.getStage1Schedule(tournamentId);
+    const updated = swapStage1TeamsEngine(schedule, matchIdA, slotA, matchIdB, slotB);
+    this.stage1Schedules.set(tournamentId, updated);
+    this.logAudit(
+      tournamentId,
+      "admin",
+      "SUPER_ADMIN",
+      "SWAP_STAGE1_TEAMS",
+      "Match",
+      matchIdA,
+      `Swapped teams between ${matchIdA} and ${matchIdB}`
+    );
+    return updated;
+  }
+
+  setStage1ByeTeam(tournamentId: string, teamId: string): Stage1ScheduleResult {
+    return this.regenerateStage1Schedule(tournamentId, teamId);
+  }
+
+  updateStage1MatchStatus(
+    tournamentId: string,
+    matchId: string,
+    status: Stage1MatchStatus
+  ): Stage1ScheduleResult {
+    const schedule = this.getStage1Schedule(tournamentId);
+    const match = schedule.allMatches.find((m) => m.matchId === matchId);
+    if (!match) throw new Error(`Match ${matchId} not found`);
+
+    match.status = status;
+    if (status === "Teams Called") {
+      match.attendanceStatus.calledAt = new Date().toISOString();
+      const graceMs = Date.now() + schedule.config.gracePeriodMinutes * 60 * 1000;
+      match.gracePeriodEndTime = new Date(graceMs).toISOString();
+    } else if (status === "Ready") {
+      match.attendanceStatus.teamAReady = true;
+      match.attendanceStatus.teamBReady = true;
+      match.attendanceStatus.readyAt = new Date().toISOString();
+    } else if (status === "Completed") {
+      // Mark participating teams as having played
+      const teams = this.getTeams(tournamentId);
+      if (match.teamA) {
+        const tA = teams.find((t) => t.id === match.teamA!.id);
+        if (tA) tA.hasPlayed = true;
+      }
+      if (match.teamB) {
+        const tB = teams.find((t) => t.id === match.teamB!.id);
+        if (tB) tB.hasPlayed = true;
+      }
+    }
+
+    // Update in slots
+    for (const s of schedule.slots) {
+      const idx = s.matches.findIndex((m) => m.matchId === matchId);
+      if (idx !== -1) s.matches[idx] = match;
+    }
+
+    this.stage1Schedules.set(tournamentId, schedule);
+    this.logAudit(
+      tournamentId,
+      "organizer",
+      "COORDINATOR",
+      "STAGE1_STATUS_UPDATE",
+      "Match",
+      matchId,
+      `Match ${matchId} status changed to ${status}`
+    );
+    return schedule;
+  }
+
+  recordStage1MatchResult(
+    tournamentId: string,
+    matchId: string,
+    scoreA: number,
+    scoreB: number,
+    winnerId?: string
+  ): Stage1ScheduleResult {
+    const schedule = this.getStage1Schedule(tournamentId);
+    const match = schedule.allMatches.find((m) => m.matchId === matchId);
+    if (!match) throw new Error(`Match ${matchId} not found`);
+    if (!match.teamA || !match.teamB) throw new Error(`Match lacks teams.`);
+
+    const determinedWinnerId = winnerId || (scoreA > scoreB ? match.teamA.id : match.teamB.id);
+    const loserId = determinedWinnerId === match.teamA.id ? match.teamB.id : match.teamA.id;
+
+    match.result = {
+      teamAScore: scoreA,
+      teamBScore: scoreB,
+      winnerId: determinedWinnerId,
+      loserId,
+      verified: true,
+    };
+    match.status = "Completed";
+
+    // Mark both teams as hasPlayed
+    const teams = this.getTeams(tournamentId);
+    const tA = teams.find((t) => t.id === match.teamA!.id);
+    if (tA) tA.hasPlayed = true;
+    const tB = teams.find((t) => t.id === match.teamB!.id);
+    if (tB) tB.hasPlayed = true;
+
+    for (const s of schedule.slots) {
+      const idx = s.matches.findIndex((m) => m.matchId === matchId);
+      if (idx !== -1) s.matches[idx] = match;
+    }
+
+    this.stage1Schedules.set(tournamentId, schedule);
+    this.logAudit(
+      tournamentId,
+      "official",
+      "RESULTS_OFFICIAL",
+      "STAGE1_RECORD_RESULT",
+      "Match",
+      matchId,
+      `Result recorded: ${scoreA}-${scoreB}, Winner: ${determinedWinnerId}`
+    );
+    return schedule;
+  }
+
+  forfeitStage1Match(
+    tournamentId: string,
+    matchId: string,
+    forfeitingTeamId: string,
+    reason: string
+  ): Stage1ScheduleResult {
+    const schedule = this.getStage1Schedule(tournamentId);
+    const match = schedule.allMatches.find((m) => m.matchId === matchId);
+    if (!match || !match.teamA || !match.teamB) throw new Error("Match not found or invalid");
+
+    const winner = match.teamA.id === forfeitingTeamId ? match.teamB : match.teamA;
+    match.status = "Forfeit";
+    match.result = {
+      teamAScore: winner.id === match.teamA.id ? 13 : 0,
+      teamBScore: winner.id === match.teamB.id ? 13 : 0,
+      winnerId: winner.id,
+      loserId: forfeitingTeamId,
+      verified: true,
+    };
+    match.notes = `Forfeit / No Show: ${reason}`;
+
+    for (const s of schedule.slots) {
+      const idx = s.matches.findIndex((m) => m.matchId === matchId);
+      if (idx !== -1) s.matches[idx] = match;
+    }
+
+    this.stage1Schedules.set(tournamentId, schedule);
+    this.logAudit(
+      tournamentId,
+      "organizer",
+      "SUPER_ADMIN",
+      "STAGE1_FORFEIT_MATCH",
+      "Match",
+      matchId,
+      `Match forfeited by ${forfeitingTeamId}. Reason: ${reason}`
+    );
+    return schedule;
+  }
+
+  // --- IPL Playoffs & 3-Place Rankings ---
+  getIPLPlayoffs(tournamentId: string): IPLPlayoffStructure | null {
+    return this.iplPlayoffs.get(tournamentId) || null;
+  }
+
+  initIPLPlayoffs(tournamentId: string, top4TeamIds?: string[]): IPLPlayoffStructure {
+    const teams = this.getTeams(tournamentId);
+    let selected: StoredTeam[] = [];
+
+    if (top4TeamIds && top4TeamIds.length === 4) {
+      selected = top4TeamIds.map((id) => teams.find((t) => t.id === id)!).filter(Boolean);
+    }
+    if (selected.length < 4) {
+      selected = teams.slice(0, 4);
+    }
+
+    const participants = selected.map((t) => ({ id: t.id, name: t.name, seed: t.seed }));
+    const playoffs = generateIPLPlayoffs(tournamentId, participants);
+    this.iplPlayoffs.set(tournamentId, playoffs);
+    this.logAudit(
+      tournamentId,
+      "admin",
+      "SUPER_ADMIN",
+      "INIT_IPL_PLAYOFFS",
+      "Playoffs",
+      tournamentId,
+      `Initialized IPL Playoffs with top 4 teams: ${participants.map((p) => p.name).join(", ")}`
+    );
+    return playoffs;
+  }
+
+  recordIPLResult(
+    tournamentId: string,
+    matchCode: "Q1" | "EL" | "Q2" | "GF",
+    winnerId: string,
+    scoreA: number,
+    scoreB: number
+  ): IPLPlayoffStructure {
+    let playoffs = this.getIPLPlayoffs(tournamentId);
+    if (!playoffs) {
+      playoffs = this.initIPLPlayoffs(tournamentId);
+    }
+
+    const updated = advanceIPLPlayoffResult(playoffs, matchCode, winnerId, { scoreA, scoreB });
+    this.iplPlayoffs.set(tournamentId, updated);
+    this.logAudit(
+      tournamentId,
+      "official",
+      "RESULTS_OFFICIAL",
+      "RECORD_IPL_RESULT",
+      "PlayoffMatch",
+      matchCode,
+      `Recorded result for ${matchCode}: Winner ${winnerId} (${scoreA}-${scoreB})`
+    );
+    return updated;
+  }
+
+  getPrizeStandings(tournamentId: string): IPLPrizeRankings {
+    const playoffs = this.getIPLPlayoffs(tournamentId);
+    if (!playoffs) {
+      return { isCompleted: false };
+    }
+    return playoffs.rankings;
   }
 
   // --- Live Operations ---
