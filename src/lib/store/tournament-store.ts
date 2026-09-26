@@ -4,6 +4,7 @@ import { evaluateLabCapacity, calculateVenueCapacity } from "../scheduling/capac
 import { generateSingleEliminationBracket, advanceBracketWinner } from "../tournament/bracket";
 import { generateFixtures } from "../scheduling/scheduler";
 import { runPreFinalizationValidation, ValidationReport } from "../tournament/validator";
+import { validateTournamentTransition, validateMatchTransition } from "../tournament/state-machine";
 
 export interface StoredTournament {
   id: string;
@@ -272,16 +273,25 @@ class TournamentStore {
     return tournament;
   }
 
-  updateTournamentStatus(id: string, status: TournamentStatus, reason?: string): StoredTournament {
+  updateTournamentStatus(
+    id: string,
+    status: TournamentStatus,
+    reason?: string,
+    actorId: string = "admin",
+    actorRole: string = "SUPER_ADMIN"
+  ): StoredTournament {
     const t = this.tournaments.get(id);
     if (!t) throw new Error("Tournament not found");
     const oldStatus = t.status;
+    if (oldStatus !== status) {
+      validateTournamentTransition(oldStatus, status);
+    }
     t.status = status;
     t.updatedAt = new Date().toISOString();
     if (status === "FINALIZED") {
       t.finalizedAt = new Date().toISOString();
     }
-    this.logAudit(id, "admin", "SUPER_ADMIN", "UPDATE_TOURNAMENT_STATUS", "Tournament", id, `Status changed from ${oldStatus} to ${status}${reason ? ` (${reason})` : ""}`);
+    this.logAudit(id, actorId, actorRole, "UPDATE_TOURNAMENT_STATUS", "Tournament", id, `Status changed from ${oldStatus} to ${status}${reason ? ` (${reason})` : ""}`);
     return t;
   }
 
@@ -290,7 +300,12 @@ class TournamentStore {
     return this.teams.get(tournamentId) || [];
   }
 
-  addTeam(tournamentId: string, teamData: Partial<StoredTeam>): StoredTeam {
+  addTeam(
+    tournamentId: string,
+    teamData: Partial<StoredTeam>,
+    actorId: string = "admin",
+    actorRole: string = "SUPER_ADMIN"
+  ): StoredTeam {
     const teams = this.getTeams(tournamentId);
     const newTeam: StoredTeam = {
       id: `team-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
@@ -305,11 +320,16 @@ class TournamentStore {
     };
     teams.push(newTeam);
     this.teams.set(tournamentId, teams);
-    this.logAudit(tournamentId, "admin", "SUPER_ADMIN", "ADD_TEAM", "Team", newTeam.id, `Added team ${newTeam.name}`);
+    this.logAudit(tournamentId, actorId, actorRole, "ADD_TEAM", "Team", newTeam.id, `Added team ${newTeam.name}`);
     return newTeam;
   }
 
-  toggleTeamCheckIn(tournamentId: string, teamId: string): StoredTeam {
+  toggleTeamCheckIn(
+    tournamentId: string,
+    teamId: string,
+    actorId: string = "admin",
+    actorRole: string = "REGISTRATION"
+  ): StoredTeam {
     const teams = this.getTeams(tournamentId);
     const team = teams.find((t) => t.id === teamId);
     if (!team) throw new Error("Team not found");
@@ -319,7 +339,7 @@ class TournamentStore {
     team.players.forEach((p) => {
       p.present = nextStatus === "CHECKED_IN";
     });
-    this.logAudit(tournamentId, "admin", "REGISTRATION", "CHECK_IN_TEAM", "Team", team.id, `Team ${team.name} marked ${nextStatus}`);
+    this.logAudit(tournamentId, actorId, actorRole, "CHECK_IN_TEAM", "Team", team.id, `Team ${team.name} marked ${nextStatus}`);
     return team;
   }
 
@@ -328,7 +348,14 @@ class TournamentStore {
     return this.labs.get(tournamentId) || [];
   }
 
-  updatePCStatus(tournamentId: string, labId: string, pcId: string, status: PCStatus): void {
+  updatePCStatus(
+    tournamentId: string,
+    labId: string,
+    pcId: string,
+    status: PCStatus,
+    actorId: string = "admin",
+    actorRole: string = "TECHNICAL"
+  ): void {
     const labs = this.getLabs(tournamentId);
     const lab = labs.find((l) => l.id === labId);
     if (!lab) return;
@@ -354,7 +381,7 @@ class TournamentStore {
       labs[index] = reevaluated;
     }
     this.labs.set(tournamentId, labs);
-    this.logAudit(tournamentId, "admin", "TECHNICAL", "UPDATE_PC_STATUS", "PC", pcId, `PC status set to ${status}`);
+    this.logAudit(tournamentId, actorId, actorRole, "UPDATE_PC_STATUS", "PC", pcId, `PC status set to ${status}`);
   }
 
   getVenueMetrics(tournamentId: string): VenueCapacityMetrics {
@@ -367,12 +394,16 @@ class TournamentStore {
     return this.brackets.get(tournamentId) || null;
   }
 
-  generateBracket(tournamentId: string): BracketStructure {
+  generateBracket(
+    tournamentId: string,
+    actorId: string = "admin",
+    actorRole: string = "SUPER_ADMIN"
+  ): BracketStructure {
     const teams = this.getTeams(tournamentId);
     const participants = teams.map((t) => ({ id: t.id, name: t.name, seed: t.seed }));
     const bracket = generateSingleEliminationBracket(participants);
     this.brackets.set(tournamentId, bracket);
-    this.logAudit(tournamentId, "admin", "SUPER_ADMIN", "GENERATE_BRACKET", "Bracket", tournamentId, `Generated ${bracket.bracketSize}-slot bracket`);
+    this.logAudit(tournamentId, actorId, actorRole, "GENERATE_BRACKET", "Bracket", tournamentId, `Generated ${bracket.bracketSize}-slot bracket`);
     return bracket;
   }
 
@@ -380,10 +411,14 @@ class TournamentStore {
     return this.fixtures.get(tournamentId) || [];
   }
 
-  generateTournamentFixtures(tournamentId: string): ScheduledFixture[] {
+  generateTournamentFixtures(
+    tournamentId: string,
+    actorId: string = "admin",
+    actorRole: string = "SUPER_ADMIN"
+  ): ScheduledFixture[] {
     let bracket = this.getBracket(tournamentId);
     if (!bracket) {
-      bracket = this.generateBracket(tournamentId);
+      bracket = this.generateBracket(tournamentId, actorId, actorRole);
     }
     const labs = this.getLabs(tournamentId);
     const stations = labs.flatMap((l) => l.stations);
@@ -393,30 +428,55 @@ class TournamentStore {
       bufferDurationMinutes: 15,
     });
     this.fixtures.set(tournamentId, result.fixtures);
-    this.logAudit(tournamentId, "admin", "SUPER_ADMIN", "GENERATE_FIXTURES", "Fixtures", tournamentId, `Generated ${result.fixtures.length} fixtures`);
+    this.logAudit(tournamentId, actorId, actorRole, "GENERATE_FIXTURES", "Fixtures", tournamentId, `Generated ${result.fixtures.length} fixtures`);
     return result.fixtures;
   }
 
   // --- Live Operations ---
-  updateMatchStatus(tournamentId: string, matchId: string, status: MatchStatus): void {
+  updateMatchStatus(
+    tournamentId: string,
+    matchId: string,
+    status: MatchStatus,
+    actorId: string = "volunteer",
+    actorRole: string = "MATCH_MARSHAL"
+  ): void {
     const bracket = this.getBracket(tournamentId);
-    if (!bracket) return;
-    for (const r of bracket.rounds) {
-      const match = r.matches.find((m) => m.id === matchId);
-      if (match) {
-        match.status = status;
-        break;
+    let foundMatch = null;
+    if (bracket) {
+      for (const r of bracket.rounds) {
+        const match = r.matches.find((m) => m.id === matchId);
+        if (match) {
+          foundMatch = match;
+          break;
+        }
       }
     }
     const fixtures = this.getFixtures(tournamentId);
     const fix = fixtures.find((f) => f.matchId === matchId);
+
+    const currentStatus: MatchStatus = (foundMatch?.status || fix?.status || "SCHEDULED") as MatchStatus;
+    if (currentStatus !== status) {
+      validateMatchTransition(currentStatus, status);
+    }
+
+    if (foundMatch) {
+      foundMatch.status = status;
+    }
     if (fix) {
       fix.status = status;
     }
-    this.logAudit(tournamentId, "volunteer", "MATCH_MARSHAL", "UPDATE_MATCH_STATUS", "Match", matchId, `Match status updated to ${status}`);
+    this.logAudit(tournamentId, actorId, actorRole, "UPDATE_MATCH_STATUS", "Match", matchId, `Match status updated to ${status}`);
   }
 
-  submitAndVerifyResult(tournamentId: string, matchId: string, winnerId: string, scoreA: number, scoreB: number): BracketStructure {
+  submitAndVerifyResult(
+    tournamentId: string,
+    matchId: string,
+    winnerId: string,
+    scoreA: number,
+    scoreB: number,
+    actorId: string = "official",
+    actorRole: string = "RESULTS_OFFICIAL"
+  ): BracketStructure {
     const bracket = this.getBracket(tournamentId);
     if (!bracket) throw new Error("Bracket not found");
 
@@ -432,8 +492,8 @@ class TournamentStore {
 
     this.logAudit(
       tournamentId,
-      "official",
-      "RESULT_OFFICIAL",
+      actorId,
+      actorRole,
       "VERIFY_RESULT",
       "Match",
       matchId,
@@ -447,7 +507,11 @@ class TournamentStore {
     return this.incidents.get(tournamentId) || [];
   }
 
-  reportIncident(incident: Omit<StoredIncident, "id" | "createdAt" | "status">): StoredIncident {
+  reportIncident(
+    incident: Omit<StoredIncident, "id" | "createdAt" | "status">,
+    actorId?: string,
+    actorRole?: string
+  ): StoredIncident {
     const list = this.getIncidents(incident.tournamentId);
     const newInc: StoredIncident = {
       ...incident,
@@ -459,8 +523,8 @@ class TournamentStore {
     this.incidents.set(incident.tournamentId, list);
     this.logAudit(
       incident.tournamentId,
-      incident.reportedBy,
-      "MATCH_MARSHAL",
+      actorId || incident.reportedBy,
+      actorRole || "MATCH_MARSHAL",
       "REPORT_INCIDENT",
       "Incident",
       newInc.id,
@@ -469,14 +533,20 @@ class TournamentStore {
     return newInc;
   }
 
-  resolveIncident(tournamentId: string, incidentId: string, resolutionNotes: string): void {
+  resolveIncident(
+    tournamentId: string,
+    incidentId: string,
+    resolutionNotes: string,
+    actorId: string = "tech-lead",
+    actorRole: string = "TECHNICAL"
+  ): void {
     const list = this.getIncidents(tournamentId);
     const inc = list.find((i) => i.id === incidentId);
     if (inc) {
       inc.status = "RESOLVED";
       inc.resolutionNotes = resolutionNotes;
       inc.resolvedAt = new Date().toISOString();
-      this.logAudit(tournamentId, "tech-lead", "TECHNICAL", "RESOLVE_INCIDENT", "Incident", incidentId, `Resolved: ${resolutionNotes}`);
+      this.logAudit(tournamentId, actorId, actorRole, "RESOLVE_INCIDENT", "Incident", incidentId, `Resolved: ${resolutionNotes}`);
     }
   }
 

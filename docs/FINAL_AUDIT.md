@@ -53,42 +53,51 @@ The **13-Team Acceptance Scenario** (13 teams, 65 players, 40 PCs across 2 asymm
  RUN  v2.1.9 E:/Github/Valorant Brackets
 
  ✓ tests/unit/round-robin.test.ts (10 tests)
- ✓ tests/unit/group-stage.test.ts (6 tests)
  ✓ tests/integration/acceptance-scenario.test.ts (1 test)
  ✓ tests/integration/e2e-requirements.test.ts (76 tests)
+ ✓ tests/integration/api-rbac.test.ts (12 tests)
  ✓ tests/unit/adversarial-empirical.test.ts (50 tests)
- ✓ tests/unit/scheduling-engine.test.ts (3 tests)
+ ✓ tests/unit/group-stage.test.ts (6 tests)
  ✓ tests/unit/bracket-engine.test.ts (21 tests)
+ ✓ tests/unit/scheduling-engine.test.ts (3 tests)
  ✓ tests/unit/rbac.test.ts (6 tests)
  ✓ tests/unit/validator.test.ts (2 tests)
  ✓ tests/db/database.test.ts (39 tests)
  ✓ tests/unit/state-machine.test.ts (7 tests)
  ✓ tests/unit/empirical-challenge.test.ts (19 tests)
 
- Test Files  12 passed (12)
-      Tests  240 passed (240)
+ Test Files  13 passed (13)
+      Tests  252 passed (252)
 ```
 
 - **Typecheck (`npx tsc --noEmit`)**: 0 errors.
 - **Tournament Simulation (`npm run simulate`)**: Complete run through 13 teams, 40 PCs, technical incident, verified scores, and Grand Finals winner with 0 crashes.
-- **Production Build (`npm run build`)**: 16 static/dynamic routes compiled successfully.
+- **Production Build (`npm run build`)**: 15 static/dynamic pages and 11 API endpoints compiled cleanly without warnings or errors.
 
 ---
 
 ### 4. Defects Found & Remediated During Audit
 
-1. **State Machine Bypass in Acceptance Test (High)**:
-   - *Defect*: Test suite attempted to transition a match from `READY` directly to `LIVE`, skipping `LOBBY_READY`.
-   - *Fix*: State machine invariant was strictly preserved; acceptance test was updated to enforce the mandatory custom lobby configuration verification step (`READY` $\to$ `LOBBY_READY` $\to$ `LIVE`).
-2. **Missing RBAC Enforcement Module (High)**:
-   - *Defect*: Subagent crashed prior to completing RBAC security module.
-   - *Fix*: Implemented `src/lib/auth/rbac.ts` and `src/lib/auth/session.ts` with permission check utilities and 6-role permission matrix. Created comprehensive security test suite `tests/unit/rbac.test.ts`.
+1. **State Machine Bypass in UI & API (High)**:
+   - *Defect*: Volunteer interface and Live Match Board attempted to transition directly from `READY` to `LIVE`, skipping `LOBBY_READY`. In addition, `store.updateMatchStatus` did not invoke `validateMatchTransition`.
+   - *Fix*: 
+     - Updated `src/components/operations/live-match-board.tsx` and `src/app/volunteer/page.tsx` with dedicated lobby configuration buttons (`READY` $\to$ `LOBBY_READY` $\to$ `LIVE` and `FINISHED` $\to$ `RESULT_PENDING` $\to$ `VERIFIED`).
+     - Added strict state transition validation via `validateMatchTransition` and `validateTournamentTransition` in `src/lib/store/tournament-store.ts`.
+     - Validated illegal transition rejections (HTTP 400) in `tests/integration/api-rbac.test.ts`.
+2. **Missing RBAC Enforcement in API Routes (High)**:
+   - *Defect*: API routes accepted mutations without inspecting session roles.
+   - *Fix*: 
+     - Implemented `src/lib/auth/rbac.ts` and `src/lib/auth/session.ts` with permission matrix across all 6 roles (`SUPER_ADMIN`, `TOURNAMENT_ADMIN`, `COORDINATOR`, `RESULTS_OFFICIAL`, `VOLUNTEER`, `VIEWER`).
+     - Integrated `checkAuthorization()` across all API route handlers (`/api/tournaments/**`), rejecting unauthorized calls with HTTP 403 Forbidden.
+     - Secured `TOURNAMENT_UNLOCK` exclusively to `SUPER_ADMIN`.
+     - Forwarded authenticated actor ID and role to `store.logAudit` to ensure immutable operational traceability.
+     - Verified with 18 dedicated tests across `tests/unit/rbac.test.ts` and `tests/integration/api-rbac.test.ts`.
 3. **Missing Report Export Engine (Medium)**:
-   - *Defect*: No CSV or text summary exporter existed for post-tournament record keeping.
-   - *Fix*: Implemented `src/lib/export/report-generator.ts`, `src/app/api/tournaments/[id]/export/route.ts`, and dedicated UI page `/admin/reports`.
+   - *Defect*: No RFC 4180 CSV or text summary exporter existed for post-tournament record keeping.
+   - *Fix*: Implemented `src/lib/export/report-generator.ts`, `src/app/api/tournaments/[id]/export/route.ts` (protected by `EXPORT_REPORTS`), and dedicated UI page `/admin/reports` with 1-click downloads for Teams, Players, Fixtures, Incidents, Audit Logs, and Final Tournament Summary.
 4. **Missing Broadcast Announcement System (Medium)**:
    - *Defect*: Tournament day PA/Discord templates were not accessible to operators.
-   - *Fix*: Implemented `src/lib/announcements/templates.ts` and `<AnnouncementModal />` in the top navigation bar with 1-click clipboard copy.
+   - *Fix*: Implemented `src/lib/announcements/templates.ts` and `<AnnouncementModal />` in the primary navigation header, featuring 10 dynamic templates with 1-click copy for LAN PA, Discord, and WhatsApp.
 
 ---
 

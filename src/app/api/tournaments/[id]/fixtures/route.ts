@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { store } from "@/lib/store/tournament-store";
+import { checkAuthorization } from "@/lib/auth/session";
 
 export async function GET(
   _req: NextRequest,
@@ -10,11 +11,14 @@ export async function GET(
 }
 
 export async function POST(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const auth = checkAuthorization(req, "FIXTURE_GENERATE");
+  if (auth.errorResponse) return auth.errorResponse;
+
   try {
-    const fixtures = store.generateTournamentFixtures(params.id);
+    const fixtures = store.generateTournamentFixtures(params.id, auth.user.id, auth.user.role);
     return NextResponse.json({ success: true, data: fixtures });
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : "Failed to generate fixtures";

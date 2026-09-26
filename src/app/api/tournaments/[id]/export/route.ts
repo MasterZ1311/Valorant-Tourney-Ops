@@ -8,11 +8,15 @@ import {
   generateAuditCSV,
   generateFinalTournamentSummaryReport,
 } from "@/lib/export/report-generator";
+import { checkAuthorization } from "@/lib/auth/session";
 
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const auth = checkAuthorization(req, "EXPORT_REPORTS");
+  if (auth.errorResponse) return auth.errorResponse;
+
   const { searchParams } = new URL(req.url);
   const type = searchParams.get("type") || "summary";
 

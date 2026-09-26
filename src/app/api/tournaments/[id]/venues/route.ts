@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { store } from "@/lib/store/tournament-store";
 import { PCStatus } from "@/lib/scheduling/types";
+import { checkAuthorization } from "@/lib/auth/session";
 
 export async function GET(
   _req: NextRequest,
@@ -15,6 +16,9 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const auth = checkAuthorization(req, "PC_STATUS_TOGGLE");
+  if (auth.errorResponse) return auth.errorResponse;
+
   try {
     const { labId, pcId, status } = await req.json();
     if (!labId || !pcId || !status) {
@@ -23,7 +27,7 @@ export async function PATCH(
         { status: 400 }
       );
     }
-    store.updatePCStatus(params.id, labId, pcId, status as PCStatus);
+    store.updatePCStatus(params.id, labId, pcId, status as PCStatus, auth.user.id, auth.user.role);
     const metrics = store.getVenueMetrics(params.id);
     return NextResponse.json({ success: true, data: { metrics } });
   } catch (err: unknown) {

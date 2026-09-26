@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { store } from "@/lib/store/tournament-store";
+import { checkAuthorization } from "@/lib/auth/session";
 
 export async function GET(
   _req: NextRequest,
@@ -13,12 +14,19 @@ export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const auth = checkAuthorization(req, "INCIDENT_REPORT");
+  if (auth.errorResponse) return auth.errorResponse;
+
   try {
     const body = await req.json();
-    const incident = store.reportIncident({
-      ...body,
-      tournamentId: params.id,
-    });
+    const incident = store.reportIncident(
+      {
+        ...body,
+        tournamentId: params.id,
+      },
+      auth.user.id,
+      auth.user.role
+    );
     return NextResponse.json({ success: true, data: incident });
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : "Failed to report incident";
@@ -30,6 +38,9 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const auth = checkAuthorization(req, "INCIDENT_RESOLVE");
+  if (auth.errorResponse) return auth.errorResponse;
+
   try {
     const { incidentId, resolutionNotes } = await req.json();
     if (!incidentId || !resolutionNotes) {
@@ -38,7 +49,7 @@ export async function PATCH(
         { status: 400 }
       );
     }
-    store.resolveIncident(params.id, incidentId, resolutionNotes);
+    store.resolveIncident(params.id, incidentId, resolutionNotes, auth.user.id, auth.user.role);
     return NextResponse.json({ success: true, message: "Incident resolved" });
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : "Failed to resolve incident";

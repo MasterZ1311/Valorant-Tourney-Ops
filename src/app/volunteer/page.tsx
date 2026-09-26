@@ -95,7 +95,7 @@ export default function VolunteerMobilePage() {
   const playableMatches = fixtures.filter((f) => !f.isBye);
   const currentMatch =
     playableMatches.find((m) => m.status === "LIVE" || m.status === "PAUSED") ||
-    playableMatches.find((m) => m.status === "CALLED" || m.status === "READY") ||
+    playableMatches.find((m) => m.status === "CALLED" || m.status === "READY" || m.status === "LOBBY_READY") ||
     playableMatches.find((m) => m.status === "SCHEDULED") ||
     null;
 
@@ -197,6 +197,16 @@ export default function VolunteerMobilePage() {
                 )}
 
                 {currentMatch.status === "READY" && (
+                  <button
+                    onClick={() => updateMatchStatus(currentMatch.matchId, "LOBBY_READY")}
+                    className="w-full h-14 rounded-xl bg-purple-600 hover:bg-purple-500 active:scale-95 text-white font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-transform shadow-lg shadow-purple-600/30"
+                  >
+                    <CheckCircle2 className="h-5 w-5" />
+                    Confirm Custom Lobby (LOBBY READY)
+                  </button>
+                )}
+
+                {currentMatch.status === "LOBBY_READY" && (
                   <button
                     onClick={() => updateMatchStatus(currentMatch.matchId, "LIVE")}
                     className="w-full h-14 rounded-xl bg-[#ff4655] hover:bg-[#e03d4b] active:scale-95 text-white font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-transform shadow-lg shadow-[#ff4655]/40"

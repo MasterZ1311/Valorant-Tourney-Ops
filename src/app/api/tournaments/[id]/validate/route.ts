@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { store } from "@/lib/store/tournament-store";
-import { TournamentStatus } from "@/lib/tournament/types";
+import { checkAuthorization } from "@/lib/auth/session";
 
 export async function GET(
   _req: NextRequest,
@@ -21,7 +21,11 @@ export async function POST(
 ) {
   try {
     const { action, reason } = await req.json();
+
     if (action === "FINALIZE") {
+      const auth = checkAuthorization(req, "TOURNAMENT_FINALIZE");
+      if (auth.errorResponse) return auth.errorResponse;
+
       const report = store.validateTournament(params.id);
       if (!report.canFinalize) {
         return NextResponse.json(
@@ -33,19 +37,43 @@ export async function POST(
           { status: 400 }
         );
       }
-      const updated = store.updateTournamentStatus(params.id, "FINALIZED", reason);
+      const updated = store.updateTournamentStatus(
+        params.id,
+        "FINALIZED",
+        reason,
+        auth.user.id,
+        auth.user.role
+      );
       return NextResponse.json({ success: true, data: updated });
     } else if (action === "UNLOCK") {
+      const auth = checkAuthorization(req, "TOURNAMENT_UNLOCK");
+      if (auth.errorResponse) return auth.errorResponse;
+
       if (!reason || reason.trim().length === 0) {
         return NextResponse.json(
           { success: false, error: "A valid reason is required to unlock a tournament." },
           { status: 400 }
         );
       }
-      const updated = store.updateTournamentStatus(params.id, "READY", reason);
+      const updated = store.updateTournamentStatus(
+        params.id,
+        "READY",
+        reason,
+        auth.user.id,
+        auth.user.role
+      );
       return NextResponse.json({ success: true, data: updated });
     } else if (action === "START_LIVE") {
-      const updated = store.updateTournamentStatus(params.id, "LIVE", "Tournament started live");
+      const auth = checkAuthorization(req, "TOURNAMENT_FINALIZE");
+      if (auth.errorResponse) return auth.errorResponse;
+
+      const updated = store.updateTournamentStatus(
+        params.id,
+        "LIVE",
+        "Tournament started live",
+        auth.user.id,
+        auth.user.role
+      );
       return NextResponse.json({ success: true, data: updated });
     }
 

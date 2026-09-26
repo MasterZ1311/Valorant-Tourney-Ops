@@ -128,6 +128,17 @@ export function LiveMatchBoard({ initialFixtures, tournamentId }: LiveMatchBoard
                 {m.status === "READY" && (
                   <button
                     disabled={isUpdating}
+                    onClick={() => updateStatus(m.matchId, "LOBBY_READY")}
+                    className="w-full py-2.5 rounded bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors"
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Configure Lobby (LOBBY READY)
+                  </button>
+                )}
+
+                {m.status === "LOBBY_READY" && (
+                  <button
+                    disabled={isUpdating}
                     onClick={() => updateStatus(m.matchId, "LIVE")}
                     className="w-full py-2.5 rounded bg-[#ff4655] hover:bg-[#e03d4b] text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors shadow-lg shadow-[#ff4655]/20"
                   >
@@ -169,6 +180,17 @@ export function LiveMatchBoard({ initialFixtures, tournamentId }: LiveMatchBoard
                 )}
 
                 {m.status === "FINISHED" && (
+                  <button
+                    disabled={isUpdating}
+                    onClick={() => updateStatus(m.matchId, "RESULT_PENDING")}
+                    className="w-full py-2.5 rounded bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors"
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Submit For Official Verification
+                  </button>
+                )}
+
+                {m.status === "RESULT_PENDING" && (
                   <button
                     disabled={isUpdating}
                     onClick={() => updateStatus(m.matchId, "VERIFIED")}

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { store } from "@/lib/store/tournament-store";
+import { checkAuthorization } from "@/lib/auth/session";
 
 export async function GET() {
   const tournaments = store.getTournaments();
@@ -7,6 +8,11 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const auth = checkAuthorization(req, "TOURNAMENT_CREATE");
+  if (auth.errorResponse) {
+    return auth.errorResponse;
+  }
+
   try {
     const body = await req.json();
     const tournament = store.createTournament(body);
