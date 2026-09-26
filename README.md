@@ -1,4 +1,4 @@
-# VTO — VALORANT Tournament Operations System
+# Valorant-Tourney-Ops — VALORANT Tournament Operations System (VTO)
 
 A tournament-management and tournament-day operations platform specifically designed for organizers running LAN VALORANT esports tournaments in colleges, computer labs, and gaming cafes.
 
