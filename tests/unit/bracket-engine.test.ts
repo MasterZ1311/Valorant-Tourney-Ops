@@ -4,6 +4,7 @@ import {
   generateSeedOrder,
   advanceBracketWinner,
 } from "../../src/lib/tournament/bracket";
+import { runPreFinalizationValidation } from "../../src/lib/tournament/validator";
 import { Participant } from "../../src/lib/tournament/types";
 
 function createMockTeams(count: number): Participant[] {
@@ -36,6 +37,13 @@ describe("Bracket Engine — Seed Generation", () => {
 });
 
 describe("Bracket Engine — Arbitrary Team Counts & BYEs", () => {
+  it("throws error cleanly when N = 1 team", () => {
+    const singleTeam = createMockTeams(1);
+    expect(() => generateSingleEliminationBracket(singleTeam)).toThrow(
+      "A tournament requires at least 2 participants."
+    );
+  });
+
   const teamCounts = [2, 3, 5, 7, 8, 9, 13, 15, 16, 17, 32];
 
   teamCounts.forEach((count) => {
@@ -137,3 +145,96 @@ describe("Bracket Engine — Winner Advancement", () => {
     }
   });
 });
+
+describe("Validator — Check #10 Conflict-Free Fixture Schedule", () => {
+  const mockVenueMetrics = {
+    totalLabs: 1,
+    totalConfiguredPCs: 20,
+    totalWorkingPCs: 20,
+    totalOfflinePCs: 0,
+    totalStations: 2,
+    operationalStations: 2,
+    maxSimultaneousMatches: 2,
+    details: [],
+  };
+
+  const mockTeams = Array.from({ length: 2 }, (_, i) => ({
+    id: `team-${i + 1}`,
+    name: `Team ${i + 1}`,
+    players: Array.from({ length: 5 }, (_, p) => ({
+      id: `t${i + 1}-p${p + 1}`,
+      name: `Player ${p + 1}`,
+      riotId: `P${p + 1}#123`,
+    })),
+  }));
+
+  const mockFixture = {
+    matchId: "m-1",
+    roundNumber: 1,
+    roundName: "Grand Finals",
+    matchCode: "M01",
+    teamAId: "team-1",
+    teamAName: "Team 1",
+    teamBId: "team-2",
+    teamBName: "Team 2",
+    isBye: false,
+    stationId: "station-1",
+    startTime: "2026-10-15T09:00:00.000Z",
+    estimatedEndTime: "2026-10-15T09:45:00.000Z",
+    status: "SCHEDULED",
+  };
+
+  it("passes Check #10 when fixture schedule is conflict-free and start time is valid", () => {
+    const report = runPreFinalizationValidation({
+      tournament: { id: "t1", name: "Cup", status: "READY", startTime: "2026-10-15T09:00:00.000Z" },
+      teams: mockTeams,
+      venueMetrics: mockVenueMetrics,
+      bracket: generateSingleEliminationBracket(createMockTeams(2)),
+      fixtures: [mockFixture],
+      conflicts: [],
+      volunteersCount: 2,
+    });
+
+    const check10 = report.checks.find((c) => c.name === "Conflict-Free Fixture Schedule");
+    expect(check10).toBeDefined();
+    expect(check10?.passed).toBe(true);
+    expect(check10?.category).toBe("SCHEDULE");
+  });
+
+  it("fails Check #10 when scheduling conflicts are detected", () => {
+    const report = runPreFinalizationValidation({
+      tournament: { id: "t1", name: "Cup", status: "READY", startTime: "2026-10-15T09:00:00.000Z" },
+      teams: mockTeams,
+      venueMetrics: mockVenueMetrics,
+      bracket: generateSingleEliminationBracket(createMockTeams(2)),
+      fixtures: [mockFixture],
+      conflicts: ["Team 1 scheduled on Station 1 and Station 2 simultaneously"],
+      volunteersCount: 2,
+    });
+
+    const check10 = report.checks.find((c) => c.name === "Conflict-Free Fixture Schedule");
+    expect(check10).toBeDefined();
+    expect(check10?.passed).toBe(false);
+    expect(check10?.severity).toBe("CRITICAL");
+    expect(report.canFinalize).toBe(false);
+  });
+
+  it("fails Check #10 when start time is invalid", () => {
+    const report = runPreFinalizationValidation({
+      tournament: { id: "t1", name: "Cup", status: "READY", startTime: "INVALID_DATE" },
+      teams: mockTeams,
+      venueMetrics: mockVenueMetrics,
+      bracket: generateSingleEliminationBracket(createMockTeams(2)),
+      fixtures: [{ ...mockFixture, startTime: "INVALID_DATE" }],
+      conflicts: [],
+      volunteersCount: 2,
+    });
+
+    const check10 = report.checks.find((c) => c.name === "Conflict-Free Fixture Schedule");
+    expect(check10).toBeDefined();
+    expect(check10?.passed).toBe(false);
+    expect(check10?.severity).toBe("CRITICAL");
+    expect(report.canFinalize).toBe(false);
+  });
+});
+

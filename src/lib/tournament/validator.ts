@@ -26,6 +26,8 @@ export interface FinalizationData {
     id: string;
     name: string;
     status: string;
+    startTime?: Date | string | null;
+    startDate?: Date | string | null;
   };
   teams: {
     id: string;
@@ -36,6 +38,8 @@ export interface FinalizationData {
   venueMetrics: VenueCapacityMetrics;
   bracket?: BracketStructure | null;
   fixtures?: ScheduledFixture[] | null;
+  conflicts?: string[];
+  scheduleConflicts?: string[];
   volunteersCount: number;
   requireFullAttendance?: boolean;
 }
@@ -236,6 +240,61 @@ export function runPreFinalizationValidation(
       message: `${data.volunteersCount} volunteer(s) on active roster.`,
       severity: "INFO",
     });
+  }
+
+  // 10. Conflict-Free Fixture Schedule
+  const conflicts: string[] = [
+    ...(data.conflicts ?? []),
+    ...(data.scheduleConflicts ?? []),
+  ];
+
+  if (!data.fixtures || data.fixtures.length === 0) {
+    checks.push({
+      name: "Conflict-Free Fixture Schedule",
+      category: "SCHEDULE",
+      passed: false,
+      message: "Cannot verify schedule conflicts: Match fixtures have not been generated.",
+      severity: "CRITICAL",
+    });
+  } else if (conflicts.length > 0) {
+    checks.push({
+      name: "Conflict-Free Fixture Schedule",
+      category: "SCHEDULE",
+      passed: false,
+      message: `Schedule contains ${conflicts.length} unresolved scheduling conflict(s).`,
+      details: conflicts.join("; "),
+      severity: "CRITICAL",
+    });
+  } else {
+    // Validate start times
+    const startTimeRaw =
+      data.tournament.startTime ??
+      data.tournament.startDate ??
+      data.fixtures[0]?.startTime;
+
+    const parsedStartTime = startTimeRaw ? new Date(startTimeRaw).getTime() : NaN;
+    const hasInvalidStartTime =
+      !startTimeRaw ||
+      isNaN(parsedStartTime) ||
+      data.fixtures.some((f) => isNaN(new Date(f.startTime).getTime()));
+
+    if (hasInvalidStartTime) {
+      checks.push({
+        name: "Conflict-Free Fixture Schedule",
+        category: "SCHEDULE",
+        passed: false,
+        message: "Tournament fixture schedule has missing or invalid start times.",
+        severity: "CRITICAL",
+      });
+    } else {
+      checks.push({
+        name: "Conflict-Free Fixture Schedule",
+        category: "SCHEDULE",
+        passed: true,
+        message: `Fixture schedule is conflict-free and start time is valid (${data.fixtures.length} fixtures verified).`,
+        severity: "INFO",
+      });
+    }
   }
 
   const criticalErrors = checks.filter((c) => !c.passed && c.severity === "CRITICAL").length;

@@ -14,8 +14,10 @@ import {
   Smartphone,
   Tv,
   FileText,
+  Download,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AnnouncementModal } from "../operations/announcement-modal";
 
 export function Navbar() {
   const pathname = usePathname();
@@ -29,6 +31,7 @@ export function Navbar() {
     { href: "/admin/matches", label: "Live Control", icon: Activity },
     { href: "/admin/incidents", label: "Incidents", icon: ShieldAlert },
     { href: "/admin/audit", label: "Audit Log", icon: FileText },
+    { href: "/admin/reports", label: "Reports", icon: Download },
   ];
 
   return (
@@ -66,6 +69,11 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-2">
+          <AnnouncementModal
+            tournamentName="VALORANT Campus Championship 2026"
+            venueName="University Esports Complex"
+          />
+
           <Link
             href="/volunteer"
             className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold uppercase tracking-wider bg-emerald-600 hover:bg-emerald-500 text-white transition-colors"

@@ -116,12 +116,21 @@ enum PenaltyAction {
   DISQUALIFICATION
 }
 
+enum UserRole {
+  SUPER_ADMIN
+  TOURNAMENT_ADMIN
+  COORDINATOR
+  VOLUNTEER
+  RESULTS_OFFICIAL
+  VIEWER
+}
+
 model User {
   id           String        @id @default(cuid())
   email        String        @unique
   name         String
   passwordHash String
-  role         String        @default("MATCH_MARSHAL") // SUPER_ADMIN, RESULT_OFFICIAL, MATCH_MARSHAL, DISPLAY
+  role         UserRole      @default(VOLUNTEER)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
@@ -141,6 +150,7 @@ model Tournament {
   currentRound Int                @default(1)
   finalizedAt  DateTime?
   createdBy    String
+  deletedAt    DateTime?
   createdAt    DateTime           @default(now())
   updatedAt    DateTime           @updatedAt
 
@@ -155,6 +165,7 @@ model Tournament {
 
   @@index([status])
   @@index([createdAt])
+  @@index([deletedAt])
 }
 
 model TournamentSettings {
@@ -183,6 +194,7 @@ model Team {
   seed           Int?
   status         TeamStatus   @default(REGISTERED)
   checkedInAt    DateTime?
+  deletedAt      DateTime?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
@@ -196,8 +208,10 @@ model Team {
   attendances    Attendance[]
   incidents      Incident[]
 
+  @@unique([tournamentId, name])
   @@index([tournamentId, status])
   @@index([tournamentId, seed])
+  @@index([deletedAt])
 }
 
 model Player {
@@ -212,14 +226,17 @@ model Player {
   role        PlayerRole  @default(STARTER)
   verified    Boolean     @default(false)
   present     Boolean     @default(false)
+  deletedAt   DateTime?
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
   attendances Attendance[]
   incidents   Incident[]
 
+  @@unique([teamId, riotId, riotTag])
   @@index([teamId])
   @@index([riotId, riotTag])
+  @@index([deletedAt])
 }
 
 model Substitute {
@@ -279,6 +296,7 @@ model Lab {
   stations   Station[]
   pcs        PC[]
 
+  @@unique([buildingId, name])
   @@index([buildingId])
 }
 
@@ -296,6 +314,7 @@ model Station {
   matches    Match[]
   volunteerAssignments VolunteerAssignment[]
 
+  @@unique([labId, name])
   @@index([labId])
 }
 
@@ -309,11 +328,14 @@ model PC {
   ipAddress  String?
   status     PCStatus  @default(AVAILABLE)
   notes      String?
+  deletedAt  DateTime?
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
+  @@unique([labId, pcNumber])
   @@index([labId, status])
   @@index([stationId])
+  @@index([deletedAt])
 }
 
 model Volunteer {
@@ -365,7 +387,7 @@ model Round {
 
   matches      Match[]
 
-  @@index([tournamentId, roundNumber])
+  @@unique([tournamentId, roundNumber])
 }
 
 model Match {
@@ -394,6 +416,7 @@ model Match {
   actualStartTime    DateTime?
   actualEndTime      DateTime?
   status             MatchStatus  @default(SCHEDULED)
+  deletedAt          DateTime?
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
 
@@ -403,10 +426,12 @@ model Match {
   penalties          Penalty[]
   volunteerAssignments VolunteerAssignment[]
 
+  @@unique([roundId, matchNumber])
   @@index([roundId, status])
   @@index([stationId, scheduledStartTime])
   @@index([teamAId])
   @@index([teamBId])
+  @@index([deletedAt])
 }
 
 model MatchParticipant {

@@ -64,3 +64,87 @@ export interface BracketStructure {
   totalBYEs: number;
   rounds: BracketRound[];
 }
+
+export type TiebreakerRule =
+  | "POINTS"
+  | "HEAD_TO_HEAD"
+  | "ROUND_DIFFERENTIAL"
+  | "ROUNDS_WON"
+  | "SUDDEN_DEATH";
+
+export interface TeamStanding {
+  rank: number;
+  teamId: string;
+  teamName: string;
+  played: number;
+  wins: number;
+  regulationWins: number;
+  otWins: number;
+  losses: number;
+  points: number;
+  roundsWon: number;
+  roundsLost: number;
+  roundDifferential: number;
+  headToHeadWins?: number;
+  tiebreakerReason?: string;
+  team?: Participant;
+}
+
+export interface RoundRobinMatch {
+  id: string;
+  roundNumber: number;
+  roundName: string;
+  matchNumber: number;
+  code: string;
+  teamA?: Participant;
+  teamB?: Participant;
+  winnerId?: string;
+  loserId?: string;
+  scoreA?: number;
+  scoreB?: number;
+  isOvertime?: boolean;
+  isBye: boolean;
+  status: MatchStatus;
+  groupId?: string;
+}
+
+export interface RoundRobinRound {
+  roundNumber: number;
+  name: string;
+  matches: RoundRobinMatch[];
+}
+
+export interface RoundRobinStructure {
+  totalRounds: number;
+  totalMatches: number;
+  rounds: RoundRobinRound[];
+  standings?: TeamStanding[];
+}
+
+export interface TournamentGroup {
+  id: string;
+  name: string;
+  teams: Participant[];
+  rounds: RoundRobinRound[];
+  standings?: TeamStanding[];
+}
+
+export interface KnockoutAdvancement {
+  groupId: string;
+  groupName: string;
+  groupRank: number;
+  team: Participant;
+  knockoutSeed: number;
+  targetMatchId?: string;
+  targetMatchSlot?: MatchSlot;
+}
+
+export interface GroupStageStructure {
+  groupCount: number;
+  groups: TournamentGroup[];
+  totalRounds: number;
+  totalMatches: number;
+  advancement: KnockoutAdvancement[];
+  knockoutBracket?: BracketStructure;
+}
+
