@@ -103,11 +103,126 @@ class TournamentStore {
   private auditLogs: StoredAuditLog[] = [];
 
   constructor() {
-    this.seedDefaultTournament();
+    if (process.env.VITEST || process.env.NODE_ENV === "test") {
+      this.seedDefaultTournament();
+    } else {
+      this.initCleanTournament();
+    }
   }
 
-  private seedDefaultTournament() {
-    const tourneyId = "vto-tourney-1";
+  initCleanTournament(tourneyId: string = "vto-tourney-1"): StoredTournament {
+    const now = new Date();
+    const tourney: StoredTournament = {
+      id: tourneyId,
+      name: "VALORANT Tournament",
+      game: "VALORANT",
+      venueName: "Campus Gaming Complex (AI Lab & Meta lab)",
+      date: now.toISOString().split("T")[0],
+      startTime: "10:00",
+      status: "DRAFT",
+      format: "SINGLE_ELIMINATION",
+      currentRound: 1,
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
+    };
+    this.tournaments.set(tourneyId, tourney);
+    this.teams.set(tourneyId, []);
+    this.brackets.delete(tourneyId);
+    this.fixtures.set(tourneyId, []);
+    this.stage1Schedules.delete(tourneyId);
+    this.iplPlayoffs.delete(tourneyId);
+    this.incidents.set(tourneyId, []);
+
+    // Setup physical labs with available PCs
+    const lab1Stations: DomainStation[] = [1, 2, 3].map((s) => ({
+      id: `lab-1-st-${s}`,
+      name: `Match ${s}`,
+      labId: "lab-1",
+      labName: "AI Lab",
+      requiredPCs: 10,
+      pcs: [],
+      isOperational: true,
+      workingPcCount: 10,
+    }));
+    for (let i = 0; i < 30; i++) {
+      const stIdx = Math.floor(i / 10);
+      const pc: DomainPC = {
+        id: `pc-${i + 1}`,
+        pcNumber: `PC-${String(i + 1).padStart(2, "0")}`,
+        labId: "lab-1",
+        stationId: lab1Stations[stIdx].id,
+        status: "AVAILABLE",
+      };
+      lab1Stations[stIdx].pcs.push(pc);
+    }
+    const lab1: DomainLab = {
+      id: "lab-1",
+      name: "AI Lab",
+      totalPcs: 30,
+      stations: lab1Stations,
+      operationalStationsCount: 3,
+      workingPcCount: 30,
+    };
+
+    const lab2Stations: DomainStation[] = [
+      {
+        id: `lab-2-st-1`,
+        name: `Match 1`,
+        labId: "lab-2",
+        labName: "Meta lab",
+        requiredPCs: 10,
+        pcs: [],
+        isOperational: true,
+        workingPcCount: 10,
+      },
+    ];
+    for (let i = 0; i < 10; i++) {
+      const pc: DomainPC = {
+        id: `pc-2-${i + 1}`,
+        pcNumber: `PC-${String(31 + i).padStart(2, "0")}`,
+        labId: "lab-2",
+        stationId: lab2Stations[0].id,
+        status: "AVAILABLE",
+      };
+      lab2Stations[0].pcs.push(pc);
+    }
+    const lab2: DomainLab = {
+      id: "lab-2",
+      name: "Meta lab",
+      totalPcs: 10,
+      stations: lab2Stations,
+      operationalStationsCount: 1,
+      workingPcCount: 10,
+    };
+
+    this.labs.set(tourneyId, [lab1, lab2]);
+
+    this.auditLogs = [
+      {
+        id: `audit-init-${Date.now()}`,
+        tournamentId: tourneyId,
+        actorId: "system",
+        actorRole: "SUPER_ADMIN",
+        action: "TOURNAMENT_INITIALIZED",
+        entity: "Tournament",
+        entityId: tourneyId,
+        details: "Clean tournament workspace initialized. Ready for team registrations and lab configuration.",
+        timestamp: now.toISOString(),
+      },
+    ];
+
+    return tourney;
+  }
+
+  resetTournament(tourneyId: string = "vto-tourney-1"): StoredTournament {
+    return this.initCleanTournament(tourneyId);
+  }
+
+  loadDemoTournament(tourneyId: string = "vto-tourney-1"): void {
+    this.seedDefaultTournament(tourneyId);
+  }
+
+  seedDefaultTournament(tourneyId: string = "vto-tourney-1") {
     const now = new Date();
     const tourney: StoredTournament = {
       id: tourneyId,
@@ -492,8 +607,11 @@ class TournamentStore {
     tournamentId: string,
     actorId: string = "admin",
     actorRole: string = "SUPER_ADMIN"
-  ): BracketStructure {
+  ): BracketStructure | null {
     const teams = this.getTeams(tournamentId);
+    if (teams.length < 2) {
+      return null;
+    }
     const participants = teams.map((t) => ({ id: t.id, name: t.name, seed: t.seed }));
     const bracket = generateSingleEliminationBracket(participants);
     this.brackets.set(tournamentId, bracket);
@@ -513,6 +631,7 @@ class TournamentStore {
     let bracket = this.getBracket(tournamentId);
     if (!bracket) {
       bracket = this.generateBracket(tournamentId, actorId, actorRole);
+      if (!bracket) return [];
     }
     const labs = this.getLabs(tournamentId);
     const stations = labs.flatMap((l) => l.stations);
@@ -527,10 +646,13 @@ class TournamentStore {
   }
 
   // --- Stage 1 Slot Schedule Engine ---
-  getStage1Schedule(tournamentId: string): Stage1ScheduleResult {
+  getStage1Schedule(tournamentId: string): Stage1ScheduleResult | null {
     let schedule = this.stage1Schedules.get(tournamentId);
     if (!schedule) {
       const teams = this.getTeams(tournamentId).map((t) => ({ id: t.id, name: t.name, seed: t.seed }));
+      if (teams.length === 0) {
+        return null;
+      }
       const config = getDefaultStage1Config();
       schedule = generateStage1Schedule(tournamentId, teams, config);
       this.stage1Schedules.set(tournamentId, schedule);
@@ -570,6 +692,7 @@ class TournamentStore {
     slotB: "TEAM_A" | "TEAM_B"
   ): Stage1ScheduleResult {
     const schedule = this.getStage1Schedule(tournamentId);
+    if (!schedule) throw new Error("Stage 1 schedule not found or not initialized");
     const updated = swapStage1TeamsEngine(schedule, matchIdA, slotA, matchIdB, slotB);
     this.stage1Schedules.set(tournamentId, updated);
     this.logAudit(
@@ -594,6 +717,7 @@ class TournamentStore {
     status: Stage1MatchStatus
   ): Stage1ScheduleResult {
     const schedule = this.getStage1Schedule(tournamentId);
+    if (!schedule) throw new Error("Stage 1 schedule not found or not initialized");
     const match = schedule.allMatches.find((m) => m.matchId === matchId);
     if (!match) throw new Error(`Match ${matchId} not found`);
 
@@ -646,6 +770,7 @@ class TournamentStore {
     winnerId?: string
   ): Stage1ScheduleResult {
     const schedule = this.getStage1Schedule(tournamentId);
+    if (!schedule) throw new Error("Stage 1 schedule not found or not initialized");
     const match = schedule.allMatches.find((m) => m.matchId === matchId);
     if (!match) throw new Error(`Match ${matchId} not found`);
     if (!match.teamA || !match.teamB) throw new Error(`Match lacks teams.`);
@@ -694,6 +819,7 @@ class TournamentStore {
     reason: string
   ): Stage1ScheduleResult {
     const schedule = this.getStage1Schedule(tournamentId);
+    if (!schedule) throw new Error("Stage 1 schedule not found or not initialized");
     const match = schedule.allMatches.find((m) => m.matchId === matchId);
     if (!match || !match.teamA || !match.teamB) throw new Error("Match not found or invalid");
 
@@ -731,7 +857,7 @@ class TournamentStore {
     return this.iplPlayoffs.get(tournamentId) || null;
   }
 
-  initIPLPlayoffs(tournamentId: string, top4TeamIds?: string[]): IPLPlayoffStructure {
+  initIPLPlayoffs(tournamentId: string, top4TeamIds?: string[]): IPLPlayoffStructure | null {
     const teams = this.getTeams(tournamentId);
     let selected: StoredTeam[] = [];
 
@@ -743,6 +869,9 @@ class TournamentStore {
     }
 
     const participants = selected.map((t) => ({ id: t.id, name: t.name, seed: t.seed }));
+    if (participants.length < 2) {
+      return null;
+    }
     const playoffs = generateIPLPlayoffs(tournamentId, participants);
     this.iplPlayoffs.set(tournamentId, playoffs);
     this.logAudit(
@@ -767,6 +896,9 @@ class TournamentStore {
     let playoffs = this.getIPLPlayoffs(tournamentId);
     if (!playoffs) {
       playoffs = this.initIPLPlayoffs(tournamentId);
+    }
+    if (!playoffs) {
+      throw new Error("Cannot record IPL result: IPL playoffs not initialized or insufficient teams");
     }
 
     const updated = advanceIPLPlayoffResult(playoffs, matchCode, winnerId, { scoreA, scoreB });

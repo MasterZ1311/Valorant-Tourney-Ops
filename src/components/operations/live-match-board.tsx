@@ -59,7 +59,16 @@ export function LiveMatchBoard({ initialFixtures, tournamentId }: LiveMatchBoard
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+      {playableMatches.length === 0 ? (
+        <div className="bg-[#17202a] border border-[#2b3844] rounded-xl p-8 text-center text-gray-400">
+          <Activity className="h-8 w-8 text-gray-500 mx-auto mb-2" />
+          <div className="text-sm font-bold text-white">No Active Match Operations</div>
+          <div className="text-xs text-gray-400 mt-1">
+            Fixtures have not been scheduled yet. Once matches are scheduled, live station controls will appear here.
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
         {playableMatches.map((m) => {
           const isUpdating = updatingId === m.matchId;
 
@@ -212,6 +221,7 @@ export function LiveMatchBoard({ initialFixtures, tournamentId }: LiveMatchBoard
           );
         })}
       </div>
+      )}
     </div>
   );
 }

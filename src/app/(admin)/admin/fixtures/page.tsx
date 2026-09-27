@@ -7,10 +7,11 @@ export const dynamic = "force-dynamic";
 
 export default function FixturesAdminPage() {
   const tournamentId = "vto-tourney-1";
+  const teams = store.getTeams(tournamentId);
   const stage1Schedule = store.getStage1Schedule(tournamentId);
   let fixtures = store.getFixtures(tournamentId);
 
-  if (fixtures.length === 0) {
+  if (fixtures.length === 0 && teams.length >= 2) {
     fixtures = store.generateTournamentFixtures(tournamentId);
   }
 
@@ -19,7 +20,7 @@ export default function FixturesAdminPage() {
       <div>
         <h1 className="text-2xl font-black text-white">Match Fixtures & Lab Allocations</h1>
         <p className="text-xs text-gray-400 mt-1">
-          Stage 1: 13 teams assigned across AI Lab (3 stations) and Meta lab (1 station) • Max 4 simultaneous matches per slot.
+          Dynamic match station scheduling across physical labs • Station allocations & attendance tracking.
         </p>
       </div>
 

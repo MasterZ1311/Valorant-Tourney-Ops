@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 
 interface Stage1SlotFixtureBoardProps {
-  initialSchedule: Stage1ScheduleResult;
+  initialSchedule: Stage1ScheduleResult | null;
   tournamentId: string;
 }
 
@@ -32,7 +32,7 @@ export function Stage1SlotFixtureBoard({
   initialSchedule,
   tournamentId,
 }: Stage1SlotFixtureBoardProps) {
-  const [schedule, setSchedule] = useState<Stage1ScheduleResult>(initialSchedule);
+  const [schedule, setSchedule] = useState<Stage1ScheduleResult | null>(initialSchedule);
   const [selectedMatch, setSelectedMatch] = useState<Stage1MatchSlot | null>(null);
   const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
   const [isSwapModalOpen, setIsSwapModalOpen] = useState(false);
@@ -45,7 +45,7 @@ export function Stage1SlotFixtureBoard({
   const [swapSlotA, setSwapSlotA] = useState<"TEAM_A" | "TEAM_B">("TEAM_A");
   const [swapSlotB, setSwapSlotB] = useState<"TEAM_A" | "TEAM_B">("TEAM_A");
 
-  const playableMatches = schedule.allMatches.filter((m) => !m.isUnused && !m.isBye);
+  const playableMatches = schedule ? schedule.allMatches.filter((m) => !m.isUnused && !m.isBye) : [];
 
   const handleUpdateStatus = async (matchId: string, status: Stage1MatchStatus) => {
     setIsUpdating(true);
@@ -190,6 +190,32 @@ export function Stage1SlotFixtureBoard({
     }
   };
 
+  if (!schedule || schedule.allMatches.length === 0) {
+    return (
+      <div className="bg-[#17202a] border border-[#2b3844] rounded-xl p-10 text-center space-y-4">
+        <div className="h-12 w-12 rounded-full bg-[#1f2731] border border-[#2b3844] flex items-center justify-center mx-auto text-gray-400">
+          <Calendar className="h-6 w-6 text-gray-400" />
+        </div>
+        <div>
+          <h3 className="text-base font-bold text-white">Stage 1 Fixtures Not Generated</h3>
+          <p className="text-xs text-gray-400 mt-1 max-w-md mx-auto">
+            Stage 1 preliminary slots allocate physical match stations across AI Lab and Meta lab. Register teams to generate your schedule.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const teamsInSchedule = Array.from(
+    new Map(
+      schedule.allMatches
+        .flatMap((m) => [m.teamA, m.teamB])
+        .filter((t): t is NonNullable<typeof t> => Boolean(t))
+        .concat(schedule.byeTeam ? [schedule.byeTeam] : [])
+        .map((t) => [t.id, t])
+    ).values()
+  );
+
   return (
     <div className="space-y-6">
       {/* Infrastructure & Capacity Banner */}
@@ -254,7 +280,7 @@ export function Stage1SlotFixtureBoard({
           <div className="text-xs text-gray-400 flex items-center gap-2">
             <Info className="h-4 w-4 text-[#ff4655]" />
             <span>
-              Stage 1: <strong className="text-white">13 Teams</strong> = 6 Matches + 1 BYE across 2 Time Slots.
+              Stage 1: <strong className="text-white">{schedule.totalTeams} Teams</strong> = {playableMatches.length} Matches {schedule.byeTeam ? "+ 1 BYE" : ""} across {schedule.slots.length} Time Slots.
             </span>
           </div>
         </div>
@@ -270,7 +296,7 @@ export function Stage1SlotFixtureBoard({
               onChange={(e) => handleSetByeTeam(e.target.value)}
               className="bg-[#0f1923] border border-[#2b3844] rounded px-3 py-1.5 text-xs text-white font-bold"
             >
-              {official13TeamsDropdown.map((t) => (
+              {teamsInSchedule.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.name} (Seed #{t.seed})
                 </option>
@@ -685,19 +711,3 @@ export function Stage1SlotFixtureBoard({
     </div>
   );
 }
-
-const official13TeamsDropdown = [
-  { id: "team-1", name: "XARAN", seed: 1 },
-  { id: "team-2", name: "Muthusipi Orchestra", seed: 2 },
-  { id: "team-3", name: "Eclipse", seed: 3 },
-  { id: "team-4", name: "Tenzor", seed: 4 },
-  { id: "team-5", name: "ESP (espada)", seed: 5 },
-  { id: "team-6", name: "Error4O4", seed: 6 },
-  { id: "team-7", name: "TEAM VORTEX", seed: 7 },
-  { id: "team-8", name: "VALORANT NOOBS", seed: 8 },
-  { id: "team-9", name: "Skull Krushers", seed: 9 },
-  { id: "team-10", name: "x", seed: 10 },
-  { id: "team-11", name: "Goodie Gang", seed: 11 },
-  { id: "team-12", name: "TEAM EREN", seed: 12 },
-  { id: "team-13", name: "Kawai", seed: 13 },
-];

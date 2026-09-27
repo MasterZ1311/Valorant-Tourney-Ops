@@ -6,12 +6,12 @@ import { StatusBadge } from "../ui/status-badge";
 import { Trophy, CheckCircle, RefreshCw } from "lucide-react";
 
 interface BracketViewerProps {
-  initialBracket: BracketStructure;
+  initialBracket: BracketStructure | null;
   tournamentId: string;
 }
 
 export function BracketViewer({ initialBracket, tournamentId }: BracketViewerProps) {
-  const [bracket, setBracket] = useState<BracketStructure>(initialBracket);
+  const [bracket, setBracket] = useState<BracketStructure | null>(initialBracket);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [selectedMatch, setSelectedMatch] = useState<BracketMatch | null>(null);
   const [scoreA, setScoreA] = useState("13");
@@ -65,6 +65,32 @@ export function BracketViewer({ initialBracket, tournamentId }: BracketViewerPro
       setIsSubmitting(false);
     }
   };
+
+  if (!bracket || !bracket.rounds || bracket.rounds.length === 0) {
+    return (
+      <div className="bg-[#17202a] border border-[#2b3844] rounded-xl p-10 text-center space-y-4">
+        <div className="h-12 w-12 rounded-full bg-[#1f2731] border border-[#2b3844] flex items-center justify-center mx-auto text-gray-400">
+          <Trophy className="h-6 w-6 text-gray-400" />
+        </div>
+        <div>
+          <h3 className="text-base font-bold text-white">Knockout Bracket Tree Not Generated</h3>
+          <p className="text-xs text-gray-400 mt-1 max-w-md mx-auto">
+            A single-elimination knockout tree requires at least 2 registered teams. Once you register teams in the Teams Desk, you can generate your bracket here.
+          </p>
+        </div>
+        <div className="pt-2">
+          <button
+            onClick={handleRegenerateBracket}
+            disabled={isRegenerating}
+            className="px-4 py-2 rounded bg-[#ff4655] hover:bg-[#e03d4b] text-white text-xs font-bold uppercase tracking-wider transition-colors inline-flex items-center gap-1.5 disabled:opacity-50"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${isRegenerating ? "animate-spin" : ""}`} />
+            Generate Bracket Tree
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

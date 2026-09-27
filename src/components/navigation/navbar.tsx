@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AnnouncementModal } from "../operations/announcement-modal";
+import { UserGuideModal } from "../help/user-guide-modal";
 
 export function Navbar() {
   const pathname = usePathname();
@@ -69,6 +70,11 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-2">
+          <UserGuideModal
+            tournamentId="vto-tourney-1"
+            triggerVariant="navbar"
+          />
+
           <AnnouncementModal
             tournamentName="VALORANT Campus Championship 2026"
             venueName="University Esports Complex"

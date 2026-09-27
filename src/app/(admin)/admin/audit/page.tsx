@@ -32,31 +32,39 @@ export default function AuditAdminPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-[#2b3844]/60">
-            {logs.map((log) => (
-              <tr key={log.id} className="hover:bg-[#1f2731]/40 transition-colors">
-                <td className="py-3 px-4 font-mono text-gray-400 whitespace-nowrap">
-                  {new Date(log.timestamp).toLocaleString()}
-                </td>
-                <td className="py-3 px-4">
-                  <div className="font-bold text-white flex items-center gap-1.5">
-                    <Shield className="h-3 w-3 text-purple-400" />
-                    <span>{log.actorId}</span>
-                    <span className="text-[9px] uppercase px-1 rounded bg-[#0f1923] text-gray-400 border border-[#2b3844]">
-                      {log.actorRole}
-                    </span>
-                  </div>
-                </td>
-                <td className="py-3 px-4 font-mono font-bold text-[#ff4655]">
-                  {log.action}
-                </td>
-                <td className="py-3 px-4 text-gray-300">
-                  {log.entity} <span className="font-mono text-gray-500 text-[10px]">({log.entityId})</span>
-                </td>
-                <td className="py-3 px-4 text-gray-200">
-                  {log.details}
+            {logs.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="py-8 text-center text-gray-400 text-xs">
+                  No audit logs recorded yet.
                 </td>
               </tr>
-            ))}
+            ) : (
+              logs.map((log) => (
+                <tr key={log.id} className="hover:bg-[#1f2731]/40 transition-colors">
+                  <td className="py-3 px-4 font-mono text-gray-400 whitespace-nowrap">
+                    {new Date(log.timestamp).toLocaleString()}
+                  </td>
+                  <td className="py-3 px-4">
+                    <div className="font-bold text-white flex items-center gap-1.5">
+                      <Shield className="h-3 w-3 text-purple-400" />
+                      <span>{log.actorId}</span>
+                      <span className="text-[9px] uppercase px-1 rounded bg-[#0f1923] text-gray-400 border border-[#2b3844]">
+                        {log.actorRole}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="py-3 px-4 font-mono font-bold text-[#ff4655]">
+                    {log.action}
+                  </td>
+                  <td className="py-3 px-4 text-gray-300">
+                    {log.entity} <span className="font-mono text-gray-500 text-[10px]">({log.entityId})</span>
+                  </td>
+                  <td className="py-3 px-4 text-gray-200">
+                    {log.details}
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

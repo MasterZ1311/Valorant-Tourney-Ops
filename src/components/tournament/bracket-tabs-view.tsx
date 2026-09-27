@@ -11,9 +11,9 @@ import { Trophy, Layers, GitFork } from "lucide-react";
 
 interface BracketTabsViewProps {
   tournamentId: string;
-  initialBracket: BracketStructure;
-  initialIPLPlayoffs: IPLPlayoffStructure;
-  initialStage1Schedule: Stage1ScheduleResult;
+  initialBracket: BracketStructure | null;
+  initialIPLPlayoffs: IPLPlayoffStructure | null;
+  initialStage1Schedule: Stage1ScheduleResult | null;
 }
 
 export function BracketTabsView({
@@ -57,7 +57,7 @@ export function BracketTabsView({
             }`}
           >
             <Layers className="h-4 w-4" />
-            Stage 1 Fixtures (13 Teams)
+            Stage 1 Fixtures
           </button>
 
           <button

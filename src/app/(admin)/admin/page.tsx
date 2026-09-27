@@ -38,11 +38,11 @@ export default function AdminDashboardPage() {
   const checkedInCount = teams.filter((t) => t.status === "CHECKED_IN").length;
   const playedCount = teams.filter((t) => t.hasPlayed).length;
   const awaitingCount = teams.length - playedCount;
-  const activeMatches = stage1Schedule.allMatches.filter((m) => m.status === "Live" || m.status === "Paused").length;
+  const activeMatches = stage1Schedule ? stage1Schedule.allMatches.filter((m) => m.status === "Live" || m.status === "Paused").length : 0;
   const openIncidents = incidents.filter((i) => i.status !== "RESOLVED" && i.status !== "DISMISSED");
 
-  const slot1 = stage1Schedule.slots[0];
-  const slot2 = stage1Schedule.slots[1];
+  const slot1 = stage1Schedule?.slots?.[0];
+  const slot2 = stage1Schedule?.slots?.[1];
 
   return (
     <div className="space-y-8">
@@ -56,7 +56,7 @@ export default function AdminDashboardPage() {
           <p className="text-xs text-gray-400 mt-1 flex flex-wrap items-center gap-3">
             <span className="text-white font-bold">AI Lab (30 PCs) & Meta lab (10 PCs)</span>
             <span>•</span>
-            <span>Stage 1: 13 Teams (6 Matches + 1 BYE)</span>
+            <span>Stage 1: {teams.length} Teams {stage1Schedule ? `(${stage1Schedule.allMatches.filter(m => !m.isUnused && !m.isBye).length} Matches)` : "(Awaiting Roster)"}</span>
             <span>•</span>
             <span className="text-amber-400 font-bold">IPL Playoffs for 3 Prize Ranks</span>
           </p>
@@ -196,7 +196,7 @@ export default function AdminDashboardPage() {
               <Trophy className="h-3.5 w-3.5" /> 1st Place (Gold Prize)
             </div>
             <div className="text-sm font-black text-white mt-1 truncate">
-              {iplPlayoffs.rankings.firstPlace?.name || "TBD (Final Winner)"}
+              {iplPlayoffs?.rankings?.firstPlace?.name || "TBD (Final Winner)"}
             </div>
           </div>
 
@@ -205,7 +205,7 @@ export default function AdminDashboardPage() {
               <Medal className="h-3.5 w-3.5" /> 2nd Place (Silver Prize)
             </div>
             <div className="text-sm font-black text-white mt-1 truncate">
-              {iplPlayoffs.rankings.secondPlace?.name || "TBD (Final Runner-Up)"}
+              {iplPlayoffs?.rankings?.secondPlace?.name || "TBD (Final Runner-Up)"}
             </div>
           </div>
 
@@ -214,7 +214,7 @@ export default function AdminDashboardPage() {
               <Award className="h-3.5 w-3.5" /> 3rd Place (Bronze Prize)
             </div>
             <div className="text-sm font-black text-white mt-1 truncate">
-              {iplPlayoffs.rankings.thirdPlace?.name || "TBD (Loser Qualifier 2)"}
+              {iplPlayoffs?.rankings?.thirdPlace?.name || "TBD (Loser Qualifier 2)"}
             </div>
           </div>
 
@@ -223,7 +223,7 @@ export default function AdminDashboardPage() {
               4th Place (Eliminator)
             </div>
             <div className="text-sm font-black text-white mt-1 truncate">
-              {iplPlayoffs.rankings.fourthPlace?.name || "TBD (Loser Eliminator)"}
+              {iplPlayoffs?.rankings?.fourthPlace?.name || "TBD (Loser Eliminator)"}
             </div>
           </div>
         </div>
@@ -234,7 +234,7 @@ export default function AdminDashboardPage() {
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-black text-white flex items-center gap-2">
             <Calendar className="h-5 w-5 text-[#ff4655]" />
-            Stage 1 Time Slot Fixtures (13 Teams)
+            Stage 1 Time Slot Fixtures {teams.length > 0 ? `(${teams.length} Teams)` : ""}
           </h2>
           <Link
             href="/admin/fixtures"
@@ -244,103 +244,49 @@ export default function AdminDashboardPage() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Time Slot 1 */}
-          {slot1 && (
-            <div className="bg-[#17202a] border border-[#2b3844] rounded-xl p-5 space-y-3">
-              <div className="flex items-center justify-between border-b border-[#2b3844]/60 pb-2">
-                <span className="text-sm font-black text-white flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-[#ff4655]"></span>
-                  Time Slot 1 (4 Matches Max)
-                </span>
-                <span className="text-[11px] font-mono text-emerald-400 font-bold bg-emerald-950/60 px-2 py-0.5 rounded">
-                  100% Station Utilization
-                </span>
-              </div>
-
-              <div className="space-y-2">
-                {slot1.matches.map((m) => (
-                  <div
-                    key={m.matchId}
-                    className="p-2.5 rounded-lg bg-[#0f1923] border border-[#2b3844] flex items-center justify-between text-xs"
-                  >
-                    <div>
-                      <div className="text-[10px] font-mono text-gray-500">
-                        {m.labName} — {m.stationName}
-                      </div>
-                      <div className="font-bold text-white mt-0.5">
-                        <span className="text-emerald-400">{m.teamA?.name}</span>
-                        <span className="text-gray-500 mx-1.5 text-[10px]">vs</span>
-                        <span className="text-blue-400">{m.teamB?.name}</span>
-                      </div>
-                    </div>
-                    <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-[#17202a] text-gray-300">
-                      {m.status}
-                    </span>
-                  </div>
-                ))}
-              </div>
+        {!slot1 && !slot2 ? (
+          <div className="bg-[#17202a] border border-[#2b3844] rounded-xl p-8 text-center space-y-4">
+            <div className="h-12 w-12 rounded-full bg-[#1f2731] border border-[#2b3844] flex items-center justify-center mx-auto text-gray-400">
+              <Calendar className="h-6 w-6 text-gray-400" />
             </div>
-          )}
+            <div>
+              <h3 className="text-base font-bold text-white">Clean Tournament Workspace</h3>
+              <p className="text-xs text-gray-400 mt-1 max-w-md mx-auto">
+                No fixtures generated yet. Start by registering teams in the Teams & Roster Desk, verifying venue PCs, and generating match schedules.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+              <Link
+                href="/admin/teams"
+                className="px-4 py-2 rounded bg-[#ff4655] hover:bg-[#e03d4b] text-white text-xs font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5"
+              >
+                <Users className="h-4 w-4" /> Add Teams
+              </Link>
+              <Link
+                href="/admin/venues"
+                className="px-4 py-2 rounded bg-[#1f2731] hover:bg-[#2b3844] text-gray-300 hover:text-white text-xs font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 border border-[#2b3844]"
+              >
+                <Monitor className="h-4 w-4" /> Configure Labs & PCs
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Time Slot 1 */}
+            {slot1 && (
+              <div className="bg-[#17202a] border border-[#2b3844] rounded-xl p-5 space-y-3">
+                <div className="flex items-center justify-between border-b border-[#2b3844]/60 pb-2">
+                  <span className="text-sm font-black text-white flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-[#ff4655]"></span>
+                    Time Slot 1 (4 Matches Max)
+                  </span>
+                  <span className="text-[11px] font-mono text-emerald-400 font-bold bg-emerald-950/60 px-2 py-0.5 rounded">
+                    100% Station Utilization
+                  </span>
+                </div>
 
-          {/* Time Slot 2 */}
-          {slot2 && (
-            <div className="bg-[#17202a] border border-[#2b3844] rounded-xl p-5 space-y-3">
-              <div className="flex items-center justify-between border-b border-[#2b3844]/60 pb-2">
-                <span className="text-sm font-black text-white flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-blue-400"></span>
-                  Time Slot 2 (2 Matches + 1 BYE + 1 Unused)
-                </span>
-                <span className="text-[11px] font-mono text-gray-400 font-bold bg-[#0f1923] px-2 py-0.5 rounded">
-                  2 Matches Active
-                </span>
-              </div>
-
-              <div className="space-y-2">
-                {slot2.matches.map((m) => {
-                  if (m.isBye) {
-                    return (
-                      <div
-                        key={m.matchId}
-                        className="p-2.5 rounded-lg bg-[#1e172a] border border-purple-500/40 flex items-center justify-between text-xs"
-                      >
-                        <div>
-                          <div className="text-[10px] font-mono text-purple-400">
-                            {m.labName} — {m.stationName}
-                          </div>
-                          <div className="font-bold text-white mt-0.5">
-                            {m.teamA?.name}
-                          </div>
-                        </div>
-                        <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-purple-900/60 text-purple-300 border border-purple-500/40">
-                          Stage 1 BYE
-                        </span>
-                      </div>
-                    );
-                  }
-
-                  if (m.isUnused) {
-                    return (
-                      <div
-                        key={m.matchId}
-                        className="p-2.5 rounded-lg bg-[#0f1923]/40 border border-dashed border-[#2b3844] flex items-center justify-between text-xs opacity-60"
-                      >
-                        <div>
-                          <div className="text-[10px] font-mono text-gray-500">
-                            {m.labName} — {m.stationName}
-                          </div>
-                          <div className="text-gray-400 mt-0.5 italic">
-                            Unoccupied / Warm-up Station
-                          </div>
-                        </div>
-                        <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-gray-800 text-gray-500">
-                          UNUSED
-                        </span>
-                      </div>
-                    );
-                  }
-
-                  return (
+                <div className="space-y-2">
+                  {slot1.matches.map((m) => (
                     <div
                       key={m.matchId}
                       className="p-2.5 rounded-lg bg-[#0f1923] border border-[#2b3844] flex items-center justify-between text-xs"
@@ -359,12 +305,94 @@ export default function AdminDashboardPage() {
                         {m.status}
                       </span>
                     </div>
-                  );
-                })}
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+
+            {/* Time Slot 2 */}
+            {slot2 && (
+              <div className="bg-[#17202a] border border-[#2b3844] rounded-xl p-5 space-y-3">
+                <div className="flex items-center justify-between border-b border-[#2b3844]/60 pb-2">
+                  <span className="text-sm font-black text-white flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-blue-400"></span>
+                    Time Slot 2 (2 Matches + 1 BYE + 1 Unused)
+                  </span>
+                  <span className="text-[11px] font-mono text-gray-400 font-bold bg-[#0f1923] px-2 py-0.5 rounded">
+                    2 Matches Active
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  {slot2.matches.map((m) => {
+                    if (m.isBye) {
+                      return (
+                        <div
+                          key={m.matchId}
+                          className="p-2.5 rounded-lg bg-[#1e172a] border border-purple-500/40 flex items-center justify-between text-xs"
+                        >
+                          <div>
+                            <div className="text-[10px] font-mono text-purple-400">
+                              {m.labName} — {m.stationName}
+                            </div>
+                            <div className="font-bold text-white mt-0.5">
+                              {m.teamA?.name}
+                            </div>
+                          </div>
+                          <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-purple-900/60 text-purple-300 border border-purple-500/40">
+                            Stage 1 BYE
+                          </span>
+                        </div>
+                      );
+                    }
+
+                    if (m.isUnused) {
+                      return (
+                        <div
+                          key={m.matchId}
+                          className="p-2.5 rounded-lg bg-[#0f1923]/40 border border-dashed border-[#2b3844] flex items-center justify-between text-xs opacity-60"
+                        >
+                          <div>
+                            <div className="text-[10px] font-mono text-gray-500">
+                              {m.labName} — {m.stationName}
+                            </div>
+                            <div className="text-gray-400 mt-0.5 italic">
+                              Unoccupied / Warm-up Station
+                            </div>
+                          </div>
+                          <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-gray-800 text-gray-500">
+                            UNUSED
+                          </span>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div
+                        key={m.matchId}
+                        className="p-2.5 rounded-lg bg-[#0f1923] border border-[#2b3844] flex items-center justify-between text-xs"
+                      >
+                        <div>
+                          <div className="text-[10px] font-mono text-gray-500">
+                            {m.labName} — {m.stationName}
+                          </div>
+                          <div className="font-bold text-white mt-0.5">
+                            <span className="text-emerald-400">{m.teamA?.name}</span>
+                            <span className="text-gray-500 mx-1.5 text-[10px]">vs</span>
+                            <span className="text-blue-400">{m.teamB?.name}</span>
+                          </div>
+                        </div>
+                        <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-[#17202a] text-gray-300">
+                          {m.status}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

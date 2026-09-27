@@ -69,7 +69,7 @@ export default function DisplayProjectorPage({
             <p className="text-xs font-mono text-gray-400 mt-1 flex items-center gap-3">
               <span className="text-white font-bold">AI Lab (30 PCs) & Meta lab (10 PCs)</span>
               <span>•</span>
-              <span className="text-[#ff4655] font-bold">STAGE 1: 13 TEAMS • IPL PLAYOFFS</span>
+              <span className="text-[#ff4655] font-bold">STAGE 1: {data.stats?.totalTeams || 0} TEAMS • IPL PLAYOFFS</span>
             </p>
           </div>
         </div>

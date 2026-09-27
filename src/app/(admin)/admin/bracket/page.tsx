@@ -6,14 +6,15 @@ export const dynamic = "force-dynamic";
 
 export default function BracketAdminPage() {
   const tournamentId = "vto-tourney-1";
+  const teams = store.getTeams(tournamentId);
   let bracket = store.getBracket(tournamentId);
 
-  if (!bracket) {
+  if (!bracket && teams.length >= 2) {
     bracket = store.generateBracket(tournamentId);
   }
 
   let iplPlayoffs = store.getIPLPlayoffs(tournamentId);
-  if (!iplPlayoffs) {
+  if (!iplPlayoffs && teams.length >= 2) {
     iplPlayoffs = store.initIPLPlayoffs(tournamentId);
   }
 

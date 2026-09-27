@@ -1,4 +1,5 @@
 import { Navbar } from "@/components/navigation/navbar";
+import { UserGuideModal } from "@/components/help/user-guide-modal";
 
 export default function AdminLayout({
   children,
@@ -11,6 +12,7 @@ export default function AdminLayout({
       <main className="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full">
         {children}
       </main>
+      <UserGuideModal triggerVariant="floating" tournamentId="vto-tourney-1" />
     </div>
   );
 }

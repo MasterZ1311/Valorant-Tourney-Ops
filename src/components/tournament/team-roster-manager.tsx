@@ -104,7 +104,7 @@ export function TeamRosterManager({ initialTeams, tournamentId }: TeamRosterMana
         <div className="bg-[#17202a] border border-[#2b3844] rounded-lg p-3">
           <div className="text-[10px] uppercase font-bold text-gray-400">Total Registered</div>
           <div className="text-xl font-black text-white mt-0.5">{totalRegistered} Teams</div>
-          <div className="text-[10px] text-gray-500 mt-0.5">Stage 1: 13 Teams</div>
+          <div className="text-[10px] text-gray-500 mt-0.5">Tournament Roster</div>
         </div>
 
         <div className="bg-[#17202a] border border-[#2b3844] rounded-lg p-3">
@@ -161,7 +161,23 @@ export function TeamRosterManager({ initialTeams, tournamentId }: TeamRosterMana
           </div>
 
           <div className="divide-y divide-[#2b3844]/60 max-h-[550px] overflow-y-auto pr-1">
-            {filteredTeams.map((team) => {
+            {teams.length === 0 ? (
+              <div className="py-12 text-center text-gray-400 space-y-3">
+                <Users className="h-8 w-8 text-gray-500 mx-auto" />
+                <div className="text-xs text-gray-400">No teams registered yet.</div>
+                <button
+                  onClick={() => setIsAddTeamModalOpen(true)}
+                  className="px-3 py-1.5 rounded bg-[#ff4655] hover:bg-[#e03d4b] text-white text-xs font-bold uppercase transition-colors inline-flex items-center gap-1.5"
+                >
+                  <Plus className="h-3 w-3" /> Add First Team
+                </button>
+              </div>
+            ) : filteredTeams.length === 0 ? (
+              <div className="py-8 text-center text-gray-400 text-xs">
+                No teams match &quot;{search}&quot;.
+              </div>
+            ) : (
+              filteredTeams.map((team) => {
               const isSelected = selectedTeam?.id === team.id;
               const isCheckedIn = team.status === "CHECKED_IN";
 
@@ -219,7 +235,7 @@ export function TeamRosterManager({ initialTeams, tournamentId }: TeamRosterMana
                   </div>
                 </div>
               );
-            })}
+            }))}
           </div>
         </div>
 
@@ -310,8 +326,16 @@ export function TeamRosterManager({ initialTeams, tournamentId }: TeamRosterMana
               </div>
             </div>
           ) : (
-            <div className="py-20 text-center text-gray-400">
-              Select a team from the list to view and manage roster.
+            <div className="py-20 text-center text-gray-400 space-y-2">
+              <Users className="h-10 w-10 text-gray-600 mx-auto" />
+              <div className="text-sm font-bold text-gray-300">
+                {teams.length === 0 ? "Ready for Registration" : "No Team Selected"}
+              </div>
+              <p className="text-xs text-gray-500 max-w-xs mx-auto">
+                {teams.length === 0
+                  ? "Register teams to manage 5v5 rosters, Riot IDs, and check-in status."
+                  : "Select a team from the list to view and manage player roster."}
+              </p>
             </div>
           )}
         </div>

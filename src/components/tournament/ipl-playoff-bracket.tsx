@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 
 interface IPLPlayoffBracketProps {
-  initialPlayoffs: IPLPlayoffStructure;
+  initialPlayoffs: IPLPlayoffStructure | null;
   tournamentId: string;
 }
 
@@ -26,7 +26,7 @@ export function IPLPlayoffBracket({
   initialPlayoffs,
   tournamentId,
 }: IPLPlayoffBracketProps) {
-  const [playoffs, setPlayoffs] = useState<IPLPlayoffStructure>(initialPlayoffs);
+  const [playoffs, setPlayoffs] = useState<IPLPlayoffStructure | null>(initialPlayoffs);
   const [selectedMatch, setSelectedMatch] = useState<IPLPlayoffMatch | null>(null);
   const [scoreA, setScoreA] = useState(13);
   const [scoreB, setScoreB] = useState(9);
@@ -78,6 +78,22 @@ export function IPLPlayoffBracket({
       setIsUpdating(false);
     }
   };
+
+  if (!playoffs || !playoffs.matches) {
+    return (
+      <div className="bg-[#17202a] border border-[#2b3844] rounded-xl p-10 text-center space-y-4">
+        <div className="h-12 w-12 rounded-full bg-[#1f2731] border border-[#2b3844] flex items-center justify-center mx-auto text-amber-400">
+          <Trophy className="h-6 w-6 text-amber-400" />
+        </div>
+        <div>
+          <h3 className="text-base font-bold text-white">IPL Playoffs Not Seeded Yet</h3>
+          <p className="text-xs text-gray-400 mt-1 max-w-md mx-auto">
+            The IPL Playoff structure requires at least 2 qualified teams. Complete preliminary matches or register teams to seed the championship podium.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const { q1, eliminator, q2, grandFinal } = playoffs.matches;
   const { rankings } = playoffs;
