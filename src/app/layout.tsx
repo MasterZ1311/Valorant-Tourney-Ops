@@ -4,6 +4,9 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "VTO — VALORANT Tournament Operations System",
   description: "Enterprise LAN esports tournament operations platform for VALORANT",
+  icons: {
+    icon: "/images/valorant_v_logo.svg",
+  },
 };
 
 export default function RootLayout({
@@ -13,7 +16,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className="min-h-screen bg-[#0f1923] text-gray-100 antialiased selection:bg-[#ff4655] selection:text-white">
+      <body className="min-h-screen bg-valorant-dark val-grid-bg text-valorant-ivory font-body antialiased selection:bg-valorant-red selection:text-white">
         {children}
       </body>
     </html>

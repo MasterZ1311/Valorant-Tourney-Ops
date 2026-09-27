@@ -3,7 +3,10 @@
 import React, { useState } from "react";
 import { BracketStructure, BracketMatch } from "@/lib/tournament/types";
 import { StatusBadge } from "../ui/status-badge";
-import { Trophy, CheckCircle, RefreshCw } from "lucide-react";
+import { ValorantButton } from "../ui/valorant-button";
+import { TacticalCard } from "../ui/tactical-card";
+import { Trophy, CheckCircle, RefreshCw, X, ShieldAlert } from "lucide-react";
+import { soundFX } from "@/lib/sound/audio";
 
 interface BracketViewerProps {
   initialBracket: BracketStructure | null;
@@ -56,6 +59,7 @@ export function BracketViewer({ initialBracket, tournamentId }: BracketViewerPro
       });
       const data = await res.json();
       if (data.success) {
+        soundFX.playMatchStart();
         setBracket(data.data);
         setSelectedMatch(null);
       }
@@ -68,63 +72,71 @@ export function BracketViewer({ initialBracket, tournamentId }: BracketViewerPro
 
   if (!bracket || !bracket.rounds || bracket.rounds.length === 0) {
     return (
-      <div className="bg-[#17202a] border border-[#2b3844] rounded-xl p-10 text-center space-y-4">
-        <div className="h-12 w-12 rounded-full bg-[#1f2731] border border-[#2b3844] flex items-center justify-center mx-auto text-gray-400">
-          <Trophy className="h-6 w-6 text-gray-400" />
+      <TacticalCard telemetry="BRACKET STATUS: UNINITIALIZED">
+        <div className="p-10 text-center space-y-4">
+          <div className="h-14 w-14 bg-valorant-surface border border-valorant-border flex items-center justify-center mx-auto text-valorant-slate val-chamfer-btn">
+            <Trophy className="h-7 w-7 text-valorant-red" />
+          </div>
+          <div>
+            <h3 className="text-2xl font-display uppercase tracking-wider text-valorant-ivory">
+              Knockout Bracket Tree Not Generated
+            </h3>
+            <p className="text-xs font-mono text-valorant-slate mt-1 max-w-md mx-auto">
+              A single-elimination knockout tree requires at least 2 registered teams. Once you register teams in the Teams Desk, you can generate your bracket here.
+            </p>
+          </div>
+          <div className="pt-2">
+            <ValorantButton
+              onClick={handleRegenerateBracket}
+              disabled={isRegenerating}
+              variant="primary"
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${isRegenerating ? "animate-spin" : ""}`} />
+              Generate Bracket Tree
+            </ValorantButton>
+          </div>
         </div>
-        <div>
-          <h3 className="text-base font-bold text-white">Knockout Bracket Tree Not Generated</h3>
-          <p className="text-xs text-gray-400 mt-1 max-w-md mx-auto">
-            A single-elimination knockout tree requires at least 2 registered teams. Once you register teams in the Teams Desk, you can generate your bracket here.
-          </p>
-        </div>
-        <div className="pt-2">
-          <button
-            onClick={handleRegenerateBracket}
-            disabled={isRegenerating}
-            className="px-4 py-2 rounded bg-[#ff4655] hover:bg-[#e03d4b] text-white text-xs font-bold uppercase tracking-wider transition-colors inline-flex items-center gap-1.5 disabled:opacity-50"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${isRegenerating ? "animate-spin" : ""}`} />
-            Generate Bracket Tree
-          </button>
-        </div>
-      </div>
+      </TacticalCard>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4 bg-[#17202a] border border-[#2b3844] rounded-lg p-4">
+      {/* Control Banner */}
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-valorant-surface border border-valorant-border p-4 val-chamfer-btn">
         <div>
-          <h2 className="text-xl font-black text-white flex items-center gap-2">
-            <Trophy className="h-6 w-6 text-[#ff4655]" />
-            Tournament Bracket Tree
-          </h2>
-          <p className="text-xs text-gray-400 mt-1">
+          <div className="flex items-center gap-2">
+            <Trophy className="h-5 w-5 text-valorant-red" />
+            <h2 className="text-2xl font-display uppercase tracking-wider text-valorant-ivory">
+              Tournament Knockout Tree
+            </h2>
+          </div>
+          <p className="text-xs font-mono text-valorant-slate mt-1">
             Single Elimination • {bracket.bracketSize} Bracket Slots • {bracket.totalRounds} Rounds • {bracket.totalBYEs} BYEs
           </p>
         </div>
 
-        <button
+        <ValorantButton
           onClick={handleRegenerateBracket}
           disabled={isRegenerating}
-          className="flex items-center gap-2 px-3.5 py-2 rounded bg-[#ff4655] hover:bg-[#e03d4b] text-white text-xs font-bold uppercase tracking-wider transition-colors disabled:opacity-50"
+          variant="secondary"
+          size="sm"
         >
-          <RefreshCw className={`h-3.5 w-3.5 ${isRegenerating ? "animate-spin" : ""}`} />
+          <RefreshCw className={`h-3.5 w-3.5 mr-2 ${isRegenerating ? "animate-spin" : ""}`} />
           Regenerate Bracket
-        </button>
+        </ValorantButton>
       </div>
 
       {/* Bracket Tree Columns */}
       <div className="flex overflow-x-auto gap-8 pb-8 pt-2">
         {bracket.rounds.map((round) => (
           <div key={round.roundNumber} className="flex-none w-72 space-y-4">
-            <div className="sticky top-0 bg-[#0f1923]/90 backdrop-blur border-b border-[#2b3844] pb-2 text-center">
-              <span className="text-xs uppercase tracking-widest font-black text-[#ff4655]">
+            <div className="sticky top-0 bg-valorant-dark/95 backdrop-blur border-b-2 border-valorant-red pb-2 text-center">
+              <span className="text-sm uppercase tracking-widest font-display text-valorant-red">
                 {round.name}
               </span>
-              <div className="text-[10px] text-gray-400">
-                {round.matches.length} {round.matches.length === 1 ? "Match" : "Matches"}
+              <div className="text-[10px] font-mono text-valorant-slate">
+                {round.matches.length} {round.matches.length === 1 ? "COMBAT FIXTURE" : "COMBAT FIXTURES"}
               </div>
             </div>
 
@@ -141,16 +153,17 @@ export function BracketViewer({ initialBracket, tournamentId }: BracketViewerPro
                 return (
                   <div
                     key={match.id}
-                    className={`bg-[#17202a] border rounded-lg p-3 transition-all relative ${
+                    className={`bg-valorant-surface border p-3.5 transition-all relative val-chamfer-btn ${
                       match.isBye
-                        ? "border-[#2b3844]/60 opacity-75"
+                        ? "border-valorant-border/60 opacity-70"
                         : match.status === "LIVE"
-                        ? "border-red-500 shadow-lg shadow-red-500/10"
-                        : "border-[#2b3844] hover:border-gray-500"
+                        ? "border-2 border-valorant-red shadow-lg shadow-valorant-red/20"
+                        : "border-valorant-border hover:border-valorant-slate"
                     }`}
                   >
-                    <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-[#2b3844]/60">
-                      <span className="text-[11px] font-mono font-bold text-gray-400">
+                    <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-valorant-border">
+                      <span className="text-[11px] font-mono font-bold text-valorant-slate flex items-center gap-1.5">
+                        <span className="text-valorant-red">◈</span>
                         {match.code}
                       </span>
                       <StatusBadge status={match.status} />
@@ -158,51 +171,54 @@ export function BracketViewer({ initialBracket, tournamentId }: BracketViewerPro
 
                     {/* Team A Slot */}
                     <div
-                      className={`flex items-center justify-between p-1.5 rounded text-xs transition-colors mb-1 ${
+                      className={`flex items-center justify-between p-2 text-xs transition-colors mb-1.5 font-mono ${
                         isWinnerA
-                          ? "bg-emerald-950/60 font-bold text-emerald-300 border border-emerald-500/40"
-                          : "text-gray-300 bg-[#0f1923]/50"
+                          ? "bg-valorant-mint/10 font-bold text-valorant-mint border-l-4 border-valorant-mint"
+                          : "text-valorant-ivory bg-valorant-dark/80 border-l-4 border-valorant-border"
                       }`}
                     >
                       <div className="flex items-center gap-1.5 truncate">
                         {match.teamA?.seed && (
-                          <span className="text-[10px] font-mono text-gray-500">
+                          <span className="text-[10px] text-valorant-slate">
                             #{match.teamA.seed}
                           </span>
                         )}
-                        <span className="truncate">
+                        <span className="truncate font-heading font-bold uppercase">
                           {match.teamA?.name || (match.sourceMatchAId ? "TBD (Feeder)" : "BYE")}
                         </span>
                       </div>
-                      {isWinnerA && <CheckCircle className="h-3.5 w-3.5 text-emerald-400 ml-1" />}
+                      {isWinnerA && <CheckCircle className="h-4 w-4 text-valorant-mint ml-1 flex-shrink-0" />}
                     </div>
 
                     {/* Team B Slot */}
                     <div
-                      className={`flex items-center justify-between p-1.5 rounded text-xs transition-colors ${
+                      className={`flex items-center justify-between p-2 text-xs transition-colors font-mono ${
                         isWinnerB
-                          ? "bg-emerald-950/60 font-bold text-emerald-300 border border-emerald-500/40"
-                          : "text-gray-300 bg-[#0f1923]/50"
+                          ? "bg-valorant-mint/10 font-bold text-valorant-mint border-l-4 border-valorant-mint"
+                          : "text-valorant-ivory bg-valorant-dark/80 border-l-4 border-valorant-border"
                       }`}
                     >
                       <div className="flex items-center gap-1.5 truncate">
                         {match.teamB?.seed && (
-                          <span className="text-[10px] font-mono text-gray-500">
+                          <span className="text-[10px] text-valorant-slate">
                             #{match.teamB.seed}
                           </span>
                         )}
-                        <span className="truncate">
+                        <span className="truncate font-heading font-bold uppercase">
                           {match.teamB?.name || (match.sourceMatchBId ? "TBD (Feeder)" : "BYE")}
                         </span>
                       </div>
-                      {isWinnerB && <CheckCircle className="h-3.5 w-3.5 text-emerald-400 ml-1" />}
+                      {isWinnerB && <CheckCircle className="h-4 w-4 text-valorant-mint ml-1 flex-shrink-0" />}
                     </div>
 
                     {/* Quick Operator Verification Trigger */}
                     {canQuickVerify && (
                       <button
-                        onClick={() => setSelectedMatch(match)}
-                        className="w-full mt-2 py-1 text-[11px] font-bold text-white uppercase tracking-wider rounded bg-[#1f2731] hover:bg-[#ff4655] transition-colors border border-[#2b3844]"
+                        onClick={() => {
+                          soundFX.playClick();
+                          setSelectedMatch(match);
+                        }}
+                        className="w-full mt-2.5 py-1.5 text-[10px] font-heading font-bold text-valorant-ivory uppercase tracking-wider bg-valorant-elevated hover:bg-valorant-red transition-colors border border-valorant-border val-chamfer-btn"
                       >
                         Enter / Verify Score
                       </button>
@@ -217,35 +233,53 @@ export function BracketViewer({ initialBracket, tournamentId }: BracketViewerPro
 
       {/* Score Modal */}
       {selectedMatch && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-          <div className="bg-[#17202a] border border-[#2b3844] rounded-xl max-w-md w-full p-6 space-y-4">
-            <h3 className="text-lg font-black text-white">
-              Verify Result: {selectedMatch.code}
-            </h3>
-            <p className="text-xs text-gray-400">
-              Submit round score and advance the official winner to the next round.
+        <div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4">
+          <div className="bg-valorant-surface border-2 border-valorant-red max-w-md w-full p-6 space-y-4 val-chamfer relative shadow-2xl shadow-valorant-red/30">
+            <div className="flex items-center justify-between border-b border-valorant-border pb-3">
+              <div>
+                <div className="text-[10px] font-mono text-valorant-red uppercase tracking-widest font-bold">
+                  MATCH OFFICIAL VERIFICATION // {selectedMatch.code}
+                </div>
+                <h3 className="text-2xl font-display uppercase tracking-wider text-valorant-ivory mt-0.5">
+                  Verify Result: {selectedMatch.code}
+                </h3>
+              </div>
+              <button
+                onClick={() => setSelectedMatch(null)}
+                className="text-valorant-slate hover:text-valorant-ivory transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <p className="text-xs font-mono text-valorant-slate">
+              Submit verified round score and advance the official winner to the next round.
             </p>
 
             <div className="space-y-3 pt-2">
-              <div className="flex items-center justify-between bg-[#0f1923] p-3 rounded border border-[#2b3844]">
-                <span className="font-bold text-sm text-white">{selectedMatch.teamA?.name}</span>
+              <div className="flex items-center justify-between bg-valorant-dark p-3 border border-valorant-border">
+                <span className="font-heading font-bold text-sm text-valorant-ivory uppercase">
+                  {selectedMatch.teamA?.name}
+                </span>
                 <input
                   type="number"
                   value={scoreA}
                   onChange={(e) => setScoreA(e.target.value)}
-                  className="w-16 bg-[#1f2731] border border-[#2b3844] rounded px-2 py-1 text-center font-mono font-bold text-white"
+                  className="w-16 bg-valorant-surface border border-valorant-border px-2 py-1 text-center font-mono font-bold text-valorant-ivory focus:border-valorant-red focus:outline-none"
                   min="0"
                   max="30"
                 />
               </div>
 
-              <div className="flex items-center justify-between bg-[#0f1923] p-3 rounded border border-[#2b3844]">
-                <span className="font-bold text-sm text-white">{selectedMatch.teamB?.name}</span>
+              <div className="flex items-center justify-between bg-valorant-dark p-3 border border-valorant-border">
+                <span className="font-heading font-bold text-sm text-valorant-ivory uppercase">
+                  {selectedMatch.teamB?.name}
+                </span>
                 <input
                   type="number"
                   value={scoreB}
                   onChange={(e) => setScoreB(e.target.value)}
-                  className="w-16 bg-[#1f2731] border border-[#2b3844] rounded px-2 py-1 text-center font-mono font-bold text-white"
+                  className="w-16 bg-valorant-surface border border-valorant-border px-2 py-1 text-center font-mono font-bold text-valorant-ivory focus:border-valorant-red focus:outline-none"
                   min="0"
                   max="30"
                 />
@@ -253,28 +287,30 @@ export function BracketViewer({ initialBracket, tournamentId }: BracketViewerPro
             </div>
 
             <div className="grid grid-cols-2 gap-2 pt-2">
-              <button
+              <ValorantButton
                 disabled={isSubmitting}
                 onClick={() => handleAdvanceWinner(selectedMatch, selectedMatch.teamA!.id)}
-                className="py-2.5 px-3 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider"
+                variant="mint"
+                size="sm"
               >
                 Award {selectedMatch.teamA?.name}
-              </button>
+              </ValorantButton>
 
-              <button
+              <ValorantButton
                 disabled={isSubmitting}
                 onClick={() => handleAdvanceWinner(selectedMatch, selectedMatch.teamB!.id)}
-                className="py-2.5 px-3 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider"
+                variant="mint"
+                size="sm"
               >
                 Award {selectedMatch.teamB?.name}
-              </button>
+              </ValorantButton>
             </div>
 
             <button
               onClick={() => setSelectedMatch(null)}
-              className="w-full py-2 text-xs font-semibold text-gray-400 hover:text-white"
+              className="w-full py-2 text-xs font-mono uppercase tracking-wider text-valorant-slate hover:text-valorant-ivory transition-colors text-center"
             >
-              Cancel
+              Cancel Operation
             </button>
           </div>
         </div>

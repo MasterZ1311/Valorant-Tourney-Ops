@@ -2,6 +2,30 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'Tungsten';
+  src: url('/fonts/Tungsten-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'DIN Next';
+  src: url('/fonts/DINNextLTPro-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'DIN Next';
+  src: url('/fonts/DINNextLTPro-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --background: 215 28% 10%;
   --foreground: 210 40% 98%;
@@ -12,7 +36,7 @@
   --popover: 217 24% 14%;
   --popover-foreground: 210 40% 98%;
 
-  --primary: 355 100% 64%; /* VALORANT Red */
+  --primary: 355 100% 64%; /* VALORANT Red #FF4655 */
   --primary-foreground: 210 40% 98%;
 
   --secondary: 217 19% 27%;
@@ -31,28 +55,65 @@
   --input: 217 19% 22%;
   --ring: 355 100% 64%;
 
-  --radius: 0.5rem;
+  --radius: 0px; /* VALORANT uses sharp 0px corners with chamfer accents */
 }
 
 body {
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: #0F1923;
+  color: #ECE8E1;
+  font-family: 'DIN Next', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Custom scrollbars */
+/* VALORANT Tactical Geometric Utilities */
+.val-chamfer {
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+}
+
+.val-chamfer-btn {
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+}
+
+.val-chamfer-tab {
+  clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 100%, 0 100%);
+}
+
+.val-grid-bg {
+  background-color: #0F1923;
+  background-image: radial-gradient(rgba(236, 232, 225, 0.07) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.val-hazard-bg {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(255, 70, 85, 0.15),
+    rgba(255, 70, 85, 0.15) 10px,
+    transparent 10px,
+    transparent 20px
+  );
+}
+
+.val-scanline {
+  background: linear-gradient(
+    rgba(15, 25, 35, 0) 50%,
+    rgba(0, 0, 0, 0.2) 50%
+  );
+  background-size: 100% 4px;
+}
+
+/* Custom Tactical Scrollbars */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0f1923;
+  background: #0F1923;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2b3844;
-  border-radius: 4px;
+  background: #2B3844;
+  border-radius: 0px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #ff4655;
+  background: #FF4655;
 }

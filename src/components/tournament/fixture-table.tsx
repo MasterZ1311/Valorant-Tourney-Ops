@@ -3,7 +3,10 @@
 import React, { useState } from "react";
 import { ScheduledFixture } from "@/lib/scheduling/types";
 import { StatusBadge } from "../ui/status-badge";
-import { Calendar, Monitor, RefreshCw, CheckCircle, Clock } from "lucide-react";
+import { ValorantButton } from "../ui/valorant-button";
+import { TacticalCard } from "../ui/tactical-card";
+import { soundFX } from "@/lib/sound/audio";
+import { Calendar, Monitor, RefreshCw, Clock } from "lucide-react";
 import { formatTime } from "@/lib/utils";
 
 interface FixtureTableProps {
@@ -26,6 +29,7 @@ export function FixtureTable({ initialFixtures, tournamentId }: FixtureTableProp
       });
       const data = await res.json();
       if (data.success) {
+        soundFX.playClick();
         setFixtures(data.data);
       }
     } catch (e) {
@@ -46,18 +50,18 @@ export function FixtureTable({ initialFixtures, tournamentId }: FixtureTableProp
   return (
     <div className="space-y-4">
       {/* Controls & Filters Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-4 bg-[#17202a] border border-[#2b3844] rounded-lg p-4">
-        <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-valorant-surface border border-valorant-border p-4 val-chamfer-btn">
+        <div className="flex flex-wrap items-center gap-4">
           <div>
-            <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">
+            <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-valorant-slate mb-1">
               Round Filter
             </label>
             <select
               value={filterRound}
               onChange={(e) => setFilterRound(e.target.value)}
-              className="bg-[#0f1923] border border-[#2b3844] rounded px-3 py-1.5 text-xs text-white"
+              className="bg-valorant-dark border border-valorant-border px-3 py-1.5 text-xs text-valorant-ivory font-mono focus:border-valorant-red focus:outline-none"
             >
-              <option value="ALL">All Rounds</option>
+              <option value="ALL">All Combat Rounds</option>
               {rounds.map((r) => (
                 <option key={r} value={r.toString()}>
                   Round {r}
@@ -67,13 +71,13 @@ export function FixtureTable({ initialFixtures, tournamentId }: FixtureTableProp
           </div>
 
           <div>
-            <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">
+            <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-valorant-slate mb-1">
               Status Filter
             </label>
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="bg-[#0f1923] border border-[#2b3844] rounded px-3 py-1.5 text-xs text-white"
+              className="bg-valorant-dark border border-valorant-border px-3 py-1.5 text-xs text-valorant-ivory font-mono focus:border-valorant-red focus:outline-none"
             >
               <option value="ALL">All Statuses</option>
               <option value="SCHEDULED">Scheduled</option>
@@ -83,91 +87,94 @@ export function FixtureTable({ initialFixtures, tournamentId }: FixtureTableProp
           </div>
         </div>
 
-        <button
+        <ValorantButton
           onClick={handleRegenerateFixtures}
           disabled={isRegenerating}
-          className="flex items-center gap-2 px-3.5 py-2 rounded bg-[#ff4655] hover:bg-[#e03d4b] text-white text-xs font-bold uppercase tracking-wider transition-colors disabled:opacity-50"
+          variant="secondary"
+          size="sm"
         >
-          <RefreshCw className={`h-3.5 w-3.5 ${isRegenerating ? "animate-spin" : ""}`} />
+          <RefreshCw className={`h-3.5 w-3.5 mr-2 ${isRegenerating ? "animate-spin" : ""}`} />
           Recalculate Hardware Schedule
-        </button>
+        </ValorantButton>
       </div>
 
       {/* Table */}
-      <div className="bg-[#17202a] border border-[#2b3844] rounded-lg overflow-x-auto">
-        <table className="w-full text-left text-xs">
-          <thead className="bg-[#0f1923] border-b border-[#2b3844] text-[10px] uppercase font-bold tracking-wider text-gray-400">
-            <tr>
-              <th className="py-3 px-4">Match</th>
-              <th className="py-3 px-4">Round</th>
-              <th className="py-3 px-4">Teams</th>
-              <th className="py-3 px-4">Station & Lab</th>
-              <th className="py-3 px-4">Scheduled Window</th>
-              <th className="py-3 px-4 text-center">Status</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[#2b3844]/60">
-            {filteredFixtures.length === 0 ? (
+      <TacticalCard telemetry="CHRONOLOGICAL FIXTURE REGISTRY">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs font-mono">
+            <thead className="bg-valorant-dark border-b border-valorant-border text-[10px] uppercase font-bold tracking-wider text-valorant-slate">
               <tr>
-                <td colSpan={6} className="py-8 text-center text-gray-400">
-                  No fixtures match the selected filters.
-                </td>
+                <th className="py-3 px-4">MATCH</th>
+                <th className="py-3 px-4">ROUND</th>
+                <th className="py-3 px-4">COMBAT SQUADS</th>
+                <th className="py-3 px-4">STATION & SECTOR</th>
+                <th className="py-3 px-4">SCHEDULED WINDOW</th>
+                <th className="py-3 px-4 text-center">STATUS</th>
               </tr>
-            ) : (
-              filteredFixtures.map((f) => (
-                <tr key={f.matchId} className="hover:bg-[#1f2731]/50 transition-colors">
-                  <td className="py-3 px-4 font-mono font-bold text-white flex items-center gap-1.5">
-                    <Calendar className="h-3.5 w-3.5 text-gray-500" />
-                    {f.matchCode}
-                  </td>
-                  <td className="py-3 px-4 text-gray-300 font-medium">{f.roundName}</td>
-                  <td className="py-3 px-4">
-                    {f.isBye ? (
-                      <span className="text-gray-400 font-medium">
-                        {f.teamAName} (Automatic BYE Advance)
-                      </span>
-                    ) : (
-                      <div className="font-bold text-white flex items-center gap-2">
-                        <span className="text-emerald-400">{f.teamAName}</span>
-                        <span className="text-gray-500 text-[10px]">vs</span>
-                        <span className="text-blue-400">{f.teamBName}</span>
-                      </div>
-                    )}
-                  </td>
-                  <td className="py-3 px-4">
-                    {f.isBye ? (
-                      <span className="text-gray-500">—</span>
-                    ) : f.stationName ? (
-                      <div className="flex items-center gap-1.5 text-gray-300">
-                        <Monitor className="h-3.5 w-3.5 text-[#ff4655]" />
-                        <span className="font-semibold text-white">{f.stationName}</span>
-                        <span className="text-gray-500">({f.labName})</span>
-                      </div>
-                    ) : (
-                      <span className="text-rose-400 font-bold">Unassigned</span>
-                    )}
-                  </td>
-                  <td className="py-3 px-4 font-mono text-gray-300">
-                    {f.isBye ? (
-                      <span className="text-gray-500">—</span>
-                    ) : (
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3 text-gray-500" />
-                        <span>{formatTime(f.startTime)}</span>
-                        <span className="text-gray-500">–</span>
-                        <span>{formatTime(f.estimatedEndTime)}</span>
-                      </div>
-                    )}
-                  </td>
-                  <td className="py-3 px-4 text-center">
-                    <StatusBadge status={f.status} />
+            </thead>
+            <tbody className="divide-y divide-valorant-border/60">
+              {filteredFixtures.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-8 text-center text-valorant-slate text-xs">
+                    NO FIXTURES MATCH SPECIFIED RADAR FILTERS.
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              ) : (
+                filteredFixtures.map((f) => (
+                  <tr key={f.matchId} className="hover:bg-valorant-elevated/40 transition-colors">
+                    <td className="py-3 px-4 font-mono font-bold text-valorant-ivory flex items-center gap-1.5">
+                      <span className="text-valorant-red">◈</span>
+                      {f.matchCode}
+                    </td>
+                    <td className="py-3 px-4 text-valorant-slate font-medium">{f.roundName}</td>
+                    <td className="py-3 px-4">
+                      {f.isBye ? (
+                        <span className="text-valorant-slate font-medium">
+                          {f.teamAName} (Automatic BYE Advance)
+                        </span>
+                      ) : (
+                        <div className="font-heading font-bold text-valorant-ivory uppercase flex items-center gap-2">
+                          <span className="text-valorant-mint">{f.teamAName}</span>
+                          <span className="text-valorant-slate font-mono text-[10px]">vs</span>
+                          <span className="text-valorant-cyan">{f.teamBName}</span>
+                        </div>
+                      )}
+                    </td>
+                    <td className="py-3 px-4">
+                      {f.isBye ? (
+                        <span className="text-valorant-slate">—</span>
+                      ) : f.stationName ? (
+                        <div className="flex items-center gap-1.5 text-valorant-ivory">
+                          <Monitor className="h-3.5 w-3.5 text-valorant-red" />
+                          <span className="font-semibold text-valorant-ivory">{f.stationName}</span>
+                          <span className="text-valorant-slate">({f.labName})</span>
+                        </div>
+                      ) : (
+                        <span className="text-valorant-red font-bold">Unassigned</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 font-mono text-valorant-slate">
+                      {f.isBye ? (
+                        <span className="text-valorant-slate">—</span>
+                      ) : (
+                        <div className="flex items-center gap-1.5">
+                          <Clock className="h-3 w-3 text-valorant-slate" />
+                          <span className="text-valorant-ivory">{formatTime(f.startTime)}</span>
+                          <span>–</span>
+                          <span>{formatTime(f.estimatedEndTime)}</span>
+                        </div>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <StatusBadge status={f.status} />
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </TacticalCard>
     </div>
   );
 }

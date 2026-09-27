@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   ShieldAlert,
@@ -15,13 +16,26 @@ import {
   Tv,
   FileText,
   Download,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AnnouncementModal } from "../operations/announcement-modal";
 import { UserGuideModal } from "../help/user-guide-modal";
+import { isAudioEnabled, toggleAudio, playButtonClick } from "@/lib/sound/audio";
 
 export function Navbar() {
   const pathname = usePathname();
+  const [audioActive, setAudioActive] = useState(true);
+
+  useEffect(() => {
+    setAudioActive(isAudioEnabled());
+  }, []);
+
+  const handleAudioToggle = () => {
+    const newState = toggleAudio();
+    setAudioActive(newState);
+  };
 
   const links = [
     { href: "/admin", label: "Dashboard", icon: Trophy },
@@ -36,16 +50,35 @@ export function Navbar() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-[#2b3844] bg-[#0f1923]/95 backdrop-blur">
+    <header className="sticky top-0 z-50 w-full border-b border-valorant-border bg-valorant-dark/95 backdrop-blur-md">
       <div className="flex h-16 items-center px-4 md:px-8 justify-between">
+        {/* Left: Brand Crest & Title */}
         <div className="flex items-center gap-6">
-          <Link href="/admin" className="flex items-center gap-2 font-black tracking-widest text-lg text-white">
-            <span className="flex h-8 w-8 items-center justify-center rounded bg-[#ff4655] text-black font-black text-sm">
-              VTO
-            </span>
-            <span className="hidden sm:inline-block">VALORANT OPS</span>
+          <Link
+            href="/admin"
+            onClick={() => playButtonClick()}
+            className="flex items-center gap-2.5 group"
+          >
+            <div className="relative w-8 h-8 flex items-center justify-center bg-valorant-red p-1.5 transition-transform group-hover:scale-105">
+              <Image
+                src="/images/valorant_v_logo.svg"
+                alt="VALORANT"
+                width={20}
+                height={20}
+                className="brightness-0 invert object-contain"
+              />
+            </div>
+            <div className="flex flex-col">
+              <span className="font-display font-black tracking-widest text-lg text-valorant-ivory leading-none group-hover:text-valorant-red transition-colors">
+                VALORANT OPS
+              </span>
+              <span className="text-[9px] font-mono tracking-widest text-valorant-slate uppercase -mt-0.5">
+                LAN PROTOCOL // VTO
+              </span>
+            </div>
           </Link>
 
+          {/* Center Navigation Links */}
           <nav className="hidden lg:flex items-center gap-1">
             {links.map((link) => {
               const Icon = link.icon;
@@ -54,22 +87,45 @@ export function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
+                  onClick={() => playButtonClick()}
                   className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold uppercase tracking-wider transition-colors",
+                    "val-chamfer-tab relative flex items-center gap-1.5 px-3 py-1.5 text-xs font-heading font-bold uppercase tracking-widest transition-all",
                     isActive
-                      ? "bg-[#ff4655] text-white"
-                      : "text-gray-400 hover:text-white hover:bg-[#1f2731]"
+                      ? "bg-valorant-red text-white shadow-sm shadow-valorant-red/30"
+                      : "text-valorant-slate hover:text-valorant-ivory hover:bg-valorant-elevated"
                   )}
                 >
                   <Icon className="h-3.5 w-3.5" />
                   {link.label}
+                  {isActive && (
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-white" />
+                  )}
                 </Link>
               );
             })}
           </nav>
         </div>
 
+        {/* Right Action Toolkit */}
         <div className="flex items-center gap-2">
+          {/* Tactical Audio Toggle */}
+          <button
+            onClick={handleAudioToggle}
+            title={audioActive ? "Mute Tactical Sound FX" : "Unmute Tactical Sound FX"}
+            className={cn(
+              "p-2 border transition-colors",
+              audioActive
+                ? "bg-valorant-surface border-valorant-border text-valorant-ivory hover:border-valorant-red"
+                : "bg-valorant-dark border-valorant-border/60 text-valorant-slate"
+            )}
+          >
+            {audioActive ? (
+              <Volume2 className="h-3.5 w-3.5 text-valorant-red" />
+            ) : (
+              <VolumeX className="h-3.5 w-3.5" />
+            )}
+          </button>
+
           <UserGuideModal
             tournamentId="vto-tourney-1"
             triggerVariant="navbar"
@@ -80,9 +136,11 @@ export function Navbar() {
             venueName="University Esports Complex"
           />
 
+          {/* Quick External Views */}
           <Link
             href="/volunteer"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold uppercase tracking-wider bg-emerald-600 hover:bg-emerald-500 text-white transition-colors"
+            onClick={() => playButtonClick()}
+            className="val-chamfer-btn flex items-center gap-1.5 px-3 py-1.5 text-xs font-heading font-bold uppercase tracking-widest bg-emerald-600 hover:bg-emerald-500 text-white transition-colors"
           >
             <Smartphone className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Marshal Mobile</span>
@@ -91,16 +149,17 @@ export function Navbar() {
           <Link
             href="/display/vto-tourney-1"
             target="_blank"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold uppercase tracking-wider bg-purple-600 hover:bg-purple-500 text-white transition-colors"
+            onClick={() => playButtonClick()}
+            className="val-chamfer-btn flex items-center gap-1.5 px-3 py-1.5 text-xs font-heading font-bold uppercase tracking-widest bg-purple-600 hover:bg-purple-500 text-white transition-colors"
           >
             <Tv className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Projector TV</span>
+            <span className="hidden sm:inline">Projector HUD</span>
           </Link>
         </div>
       </div>
-      
-      {/* Mobile navigation bar */}
-      <div className="lg:hidden flex overflow-x-auto border-t border-[#2b3844] px-2 py-1 gap-1">
+
+      {/* Mobile horizontal scrolling nav */}
+      <div className="lg:hidden flex overflow-x-auto border-t border-valorant-border px-2 py-1 gap-1 bg-valorant-dark">
         {links.map((link) => {
           const Icon = link.icon;
           const isActive = pathname === link.href;
@@ -108,11 +167,12 @@ export function Navbar() {
             <Link
               key={link.href}
               href={link.href}
+              onClick={() => playButtonClick()}
               className={cn(
-                "flex items-center gap-1 px-2.5 py-1 rounded text-xs whitespace-nowrap font-medium",
+                "val-chamfer-btn flex items-center gap-1 px-2.5 py-1 text-xs whitespace-nowrap font-heading font-bold uppercase tracking-wider",
                 isActive
-                  ? "bg-[#ff4655] text-white"
-                  : "text-gray-400 hover:text-white hover:bg-[#1f2731]"
+                  ? "bg-valorant-red text-white"
+                  : "text-valorant-slate hover:text-white hover:bg-valorant-elevated"
               )}
             >
               <Icon className="h-3 w-3" />

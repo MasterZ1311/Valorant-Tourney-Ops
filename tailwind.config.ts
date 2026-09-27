@@ -9,6 +9,12 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        display: ["Tungsten", "Anton", "Impact", "sans-serif"],
+        heading: ["DIN Next", "Rajdhani", "sans-serif"],
+        body: ["DIN Next", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
+        mono: ["JetBrains Mono", "Courier New", "monospace"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -44,11 +50,18 @@ const config: Config = {
           foreground: "hsl(var(--card-foreground))",
         },
         valorant: {
-          red: "#ff4655",
-          dark: "#0f1923",
-          lightDark: "#1f2731",
-          gold: "#ece8e1",
-          slate: "#768079",
+          dark: "#0F1923",
+          surface: "#17202A",
+          elevated: "#1F2731",
+          border: "#2B3844",
+          red: "#FF4655",
+          redDark: "#E03D4B",
+          ivory: "#ECE8E1",
+          slate: "#8B978F",
+          mint: "#66E5DA",
+          gold: "#F2D16B",
+          amber: "#FF9900",
+          cyan: "#00E5FF",
         },
       },
       borderRadius: {

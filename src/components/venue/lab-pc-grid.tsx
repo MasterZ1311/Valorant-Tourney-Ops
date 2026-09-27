@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import { DomainLab, PCStatus, VenueCapacityMetrics } from "@/lib/scheduling/types";
 import { StatusBadge } from "../ui/status-badge";
-import { Monitor, AlertTriangle, CheckCircle2, RefreshCw } from "lucide-react";
+import { Monitor, AlertTriangle, CheckCircle2, RefreshCw, Cpu, HardDrive } from "lucide-react";
+import { soundFX } from "@/lib/sound/audio";
 
 interface LabPcGridProps {
   initialLabs: DomainLab[];
@@ -17,6 +19,7 @@ export function LabPcGrid({ initialLabs, initialMetrics, tournamentId }: LabPcGr
   const [loadingPc, setLoadingPc] = useState<string | null>(null);
 
   const togglePcStatus = async (labId: string, pcId: string, currentStatus: PCStatus) => {
+    soundFX.playClick();
     const nextStatus: PCStatus = currentStatus === "AVAILABLE" ? "OFFLINE" : "AVAILABLE";
     setLoadingPc(pcId);
 
@@ -67,49 +70,75 @@ export function LabPcGrid({ initialLabs, initialMetrics, tournamentId }: LabPcGr
     <div className="space-y-6">
       {/* Top Capacity Metric Banners */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-[#1f2731] border border-[#2b3844] rounded-lg p-4">
-          <div className="text-xs uppercase tracking-wider text-gray-400 font-semibold">Total Configured PCs</div>
-          <div className="text-2xl font-black text-white mt-1">{metrics.totalConfiguredPCs}</div>
-          <div className="text-xs text-gray-500 mt-0.5">Across {metrics.totalLabs} Labs</div>
+        <div className="bg-valorant-surface border border-valorant-border p-4 val-chamfer-btn">
+          <div className="text-[10px] uppercase font-mono tracking-wider text-valorant-slate font-semibold flex items-center gap-1.5">
+            <HardDrive className="h-3.5 w-3.5 text-valorant-slate" /> TOTAL RIGS
+          </div>
+          <div className="text-3xl font-display uppercase tracking-wider text-valorant-ivory mt-1">
+            {metrics.totalConfiguredPCs}
+          </div>
+          <div className="text-xs font-mono text-valorant-slate mt-0.5">ACROSS {metrics.totalLabs} PHYSICAL LABS</div>
         </div>
 
-        <div className="bg-[#1f2731] border border-[#2b3844] rounded-lg p-4">
-          <div className="text-xs uppercase tracking-wider text-gray-400 font-semibold">Operational PCs</div>
-          <div className="text-2xl font-black text-emerald-400 mt-1">{metrics.totalWorkingPCs}</div>
-          <div className="text-xs text-gray-500 mt-0.5">{metrics.totalOfflinePCs} offline / maintenance</div>
+        <div className="bg-valorant-surface border border-valorant-border p-4 val-chamfer-btn">
+          <div className="text-[10px] uppercase font-mono tracking-wider text-valorant-slate font-semibold flex items-center gap-1.5">
+            <Cpu className="h-3.5 w-3.5 text-valorant-mint" /> OPERATIONAL RIGS
+          </div>
+          <div className="text-3xl font-display uppercase tracking-wider text-valorant-mint mt-1">
+            {metrics.totalWorkingPCs}
+          </div>
+          <div className="text-xs font-mono text-valorant-slate mt-0.5">{metrics.totalOfflinePCs} OFFLINE / MAINT</div>
         </div>
 
-        <div className="bg-[#1f2731] border border-[#2b3844] rounded-lg p-4">
-          <div className="text-xs uppercase tracking-wider text-gray-400 font-semibold">Active Stations</div>
-          <div className="text-2xl font-black text-blue-400 mt-1">
+        <div className="bg-valorant-surface border border-valorant-border p-4 val-chamfer-btn">
+          <div className="text-[10px] uppercase font-mono tracking-wider text-valorant-slate font-semibold flex items-center gap-1.5">
+            <Monitor className="h-3.5 w-3.5 text-valorant-cyan" /> ACTIVE STATIONS
+          </div>
+          <div className="text-3xl font-display uppercase tracking-wider text-valorant-cyan mt-1">
             {metrics.operationalStations} / {metrics.totalStations}
           </div>
-          <div className="text-xs text-gray-500 mt-0.5">10 working PCs required per station</div>
+          <div className="text-xs font-mono text-valorant-slate mt-0.5">10 WORKING RIGS / MATCH</div>
         </div>
 
-        <div className="bg-[#1f2731] border border-[#ff4655]/40 rounded-lg p-4 bg-gradient-to-br from-[#1f2731] to-[#ff4655]/10">
-          <div className="text-xs uppercase tracking-wider text-[#ff4655] font-semibold">Simultaneous Capacity</div>
-          <div className="text-2xl font-black text-white mt-1">{metrics.maxSimultaneousMatches} Matches</div>
-          <div className="text-xs text-gray-400 mt-0.5">Dynamic hardware calculation</div>
+        <div className="bg-valorant-surface border-2 border-valorant-red p-4 val-chamfer-btn relative overflow-hidden">
+          <div className="text-[10px] uppercase font-mono tracking-wider text-valorant-red font-semibold">
+            SIMULTANEOUS CAPACITY
+          </div>
+          <div className="text-3xl font-display uppercase tracking-wider text-valorant-ivory mt-1">
+            {metrics.maxSimultaneousMatches} MATCHES
+          </div>
+          <div className="text-xs font-mono text-valorant-slate mt-0.5">DYNAMIC HARDWARE CALCULATION</div>
         </div>
       </div>
 
       {/* Labs Layout Display */}
       {labs.map((lab) => (
-        <div key={lab.id} className="bg-[#17202a] border border-[#2b3844] rounded-lg p-5">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#2b3844] pb-4 mb-4">
+        <div key={lab.id} className="bg-valorant-surface border border-valorant-border p-5 val-chamfer relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 pointer-events-none opacity-5">
+            <Image
+              src="/images/sentinel.svg"
+              alt="Sentinel"
+              width={128}
+              height={128}
+            />
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-valorant-border pb-4 mb-4">
             <div>
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Monitor className="h-5 w-5 text-[#ff4655]" />
+              <div className="text-[10px] font-mono text-valorant-red uppercase tracking-widest font-bold">
+                PHYSICAL VENUE SECTOR // {lab.name.toUpperCase()}
+              </div>
+              <h3 className="text-2xl font-display uppercase tracking-wider text-valorant-ivory flex items-center gap-2 mt-0.5">
+                <Monitor className="h-5 w-5 text-valorant-red" />
                 {lab.name}
               </h3>
-              <p className="text-xs text-gray-400 mt-0.5">
+              <p className="text-xs font-mono text-valorant-slate mt-0.5">
                 {lab.totalPcs} PCs installed • {lab.workingPcCount} functional • {lab.operationalStationsCount} of {lab.stations.length} stations operational
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold px-2.5 py-1 rounded bg-[#0f1923] text-gray-300 border border-[#2b3844]">
-                {lab.operationalStationsCount} Match Slots
+              <span className="text-xs font-mono font-bold px-3 py-1.5 bg-valorant-dark text-valorant-ivory border border-valorant-border">
+                {lab.operationalStationsCount} COMBAT SLOTS
               </span>
             </div>
           </div>
@@ -118,36 +147,36 @@ export function LabPcGrid({ initialLabs, initialMetrics, tournamentId }: LabPcGr
             {lab.stations.map((st) => (
               <div
                 key={st.id}
-                className={`rounded-lg border p-4 transition-colors ${
+                className={`border p-4 transition-colors val-chamfer-btn ${
                   st.isOperational
-                    ? "bg-[#1f2731]/70 border-emerald-500/40"
-                    : "bg-rose-950/20 border-rose-500/40"
+                    ? "bg-valorant-dark/80 border-valorant-mint/50"
+                    : "bg-rose-950/20 border-valorant-red/50"
                 }`}
               >
                 <div className="flex items-center justify-between mb-3">
-                  <div className="font-bold text-white flex items-center gap-1.5">
+                  <div className="font-heading font-bold text-valorant-ivory flex items-center gap-1.5 text-sm uppercase">
                     {st.isOperational ? (
-                      <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                      <CheckCircle2 className="h-4 w-4 text-valorant-mint" />
                     ) : (
-                      <AlertTriangle className="h-4 w-4 text-rose-400" />
+                      <AlertTriangle className="h-4 w-4 text-valorant-red" />
                     )}
                     {st.name}
                   </div>
                   <span
-                    className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${
+                    className={`text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 border ${
                       st.isOperational
-                        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
-                        : "bg-rose-500/10 text-rose-400 border-rose-500/30"
+                        ? "bg-valorant-mint/10 text-valorant-mint border-valorant-mint/30"
+                        : "bg-valorant-red/10 text-valorant-red border-valorant-red/30"
                     }`}
                   >
-                    {st.isOperational ? "Operational" : "Offline"}
+                    {st.isOperational ? "OPERATIONAL" : "DEFICIENT"}
                   </span>
                 </div>
 
-                <div className="text-xs text-gray-400 mb-3 flex justify-between">
-                  <span>Hardware Health:</span>
-                  <span className="font-mono font-bold text-gray-200">
-                    {st.workingPcCount} / {st.requiredPCs} PCs Working
+                <div className="text-xs font-mono text-valorant-slate mb-3 flex justify-between">
+                  <span>STATION INTEGRITY:</span>
+                  <span className="font-mono font-bold text-valorant-ivory">
+                    {st.workingPcCount} / {st.requiredPCs} RIGS ONLINE
                   </span>
                 </div>
 
@@ -163,10 +192,10 @@ export function LabPcGrid({ initialLabs, initialMetrics, tournamentId }: LabPcGr
                         disabled={isUpdating}
                         onClick={() => togglePcStatus(lab.id, pc.id, pc.status)}
                         title={`Click to toggle PC status (Current: ${pc.status})`}
-                        className={`h-9 rounded flex flex-col items-center justify-center text-[10px] font-mono font-bold transition-all border ${
+                        className={`h-9 flex flex-col items-center justify-center text-[10px] font-mono font-bold transition-all border ${
                           isWorking
-                            ? "bg-emerald-950/40 border-emerald-500/40 text-emerald-300 hover:border-rose-400 hover:bg-rose-950/40 hover:text-rose-200"
-                            : "bg-rose-950/60 border-rose-500/60 text-rose-300 hover:border-emerald-400 hover:bg-emerald-950/40 hover:text-emerald-200"
+                            ? "bg-valorant-mint/10 border-valorant-mint/40 text-valorant-mint hover:border-valorant-red hover:bg-valorant-red/20 hover:text-valorant-red"
+                            : "bg-valorant-red/20 border-valorant-red/60 text-valorant-red hover:border-valorant-mint hover:bg-valorant-mint/20 hover:text-valorant-mint"
                         }`}
                       >
                         {isUpdating ? (
@@ -184,8 +213,8 @@ export function LabPcGrid({ initialLabs, initialMetrics, tournamentId }: LabPcGr
                   })}
                 </div>
 
-                <p className="text-[10px] text-gray-500 mt-2 text-center">
-                  💡 Click any PC button to toggle failure / repair
+                <p className="text-[10px] font-mono text-valorant-slate mt-2 text-center">
+                  ◈ Click rig to toggle fault / repair
                 </p>
               </div>
             ))}

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import {
   BookOpen,
   HelpCircle,
@@ -25,6 +26,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { soundFX } from "@/lib/sound/audio";
+import { ValorantButton } from "../ui/valorant-button";
 
 interface UserGuideModalProps {
   tournamentId?: string;
@@ -49,6 +52,7 @@ export function UserGuideModal({
         e.key === "?" &&
         !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)
       ) {
+        soundFX.playClick();
         setIsOpen((prev) => !prev);
       }
       if (e.key === "Escape" && isOpen) {
@@ -78,6 +82,7 @@ export function UserGuideModal({
       });
       const data = await res.json();
       if (data.success) {
+        soundFX.playClick();
         setActionMessage("Tournament cleaned! You now have a fresh, clean workspace.");
         router.refresh();
       } else {
@@ -109,7 +114,8 @@ export function UserGuideModal({
       });
       const data = await res.json();
       if (data.success) {
-        setActionMessage("Sample demo tournament loaded with 13 teams and fixtures!");
+        soundFX.playMatchStart();
+        setActionMessage("13-team demo tournament loaded successfully!");
         router.refresh();
       } else {
         setActionMessage(`Error: ${data.error || "Failed to load demo"}`);
@@ -123,73 +129,73 @@ export function UserGuideModal({
 
   const steps = [
     {
-      title: "1. Hardware & Labs Setup",
-      subtitle: "Physical resource allocation",
+      title: "1. Hardware & Physical Labs",
+      subtitle: "Configure PCs, Labs, and Station boundaries",
       icon: Monitor,
       href: "/admin/venues",
-      actionLabel: "Configure Labs",
+      actionLabel: "Go to Labs Desk",
       description:
-        "Every VALORANT 5v5 match requires exactly 10 working PCs. In the Labs & PCs desk, verify your venue systems across AI Lab and Meta lab.",
+        "Every VALORANT match requires exactly 10 working PCs. VTO enforces this strictly: 30 PCs in AI Lab yields 3 stations; 10 PCs in Meta lab yields 1 station. If a PC goes offline, match capacity recalculates dynamically.",
       tips: [
-        "10 PCs = 1 match station. Station capacity = floor(PCs / 10).",
-        "If a PC experiences a technical issue, toggle its status to OFFLINE to protect match integrity.",
-        "Buffer duration (15 min) between matches on the same station is automatically scheduled.",
+        "Click any PC box in the Labs desk to simulate a hardware fault.",
+        "Check how capacity drops if fewer than 10 PCs are available in a station.",
+        "Buffer times between matches (default: 15 min) prevent lab congestion.",
       ],
     },
     {
-      title: "2. Register Teams & Players",
-      subtitle: "Rosters & attendance check-in",
+      title: "2. Team Rosters & Attendance",
+      subtitle: "Verify Riot IDs and check in 5-player rosters",
       icon: Users,
       href: "/admin/teams",
-      actionLabel: "Open Teams Desk",
+      actionLabel: "Go to Teams Desk",
       description:
-        "Register competing teams, assign team captains, configure player rosters (5 starters + substitutes), and verify Riot IDs (Name#TAG).",
+        "Teams must have 5 verified starters with valid Riot IDs. When players arrive at the venue, mark them as 'Checked In'. Attendance status dictates whether a match can be called to an arena station.",
       tips: [
-        "Click '+ Add Team' to register new squads with captain contact details.",
-        "Add players with their verified Riot ID and role (Starter/Captain).",
-        "When teams arrive at the venue, mark them as 'CHECKED IN' to enable bracket seeding.",
+        "Teams must be CHECKED_IN before a station match can transition to READY.",
+        "Captains receive direct mobile SMS or Discord notifications on call.",
+        "Roster substitutions require coordinator audit approval.",
       ],
     },
     {
-      title: "3. Generate Brackets & Fixtures",
-      subtitle: "Preliminary slots & Knockout tree",
+      title: "3. Stage 1 Match Radar",
+      subtitle: "Scheduled fixtures & 4-station concurrent execution",
       icon: Calendar,
       href: "/admin/fixtures",
-      actionLabel: "View Fixtures Console",
+      actionLabel: "Go to Fixtures",
       description:
-        "Generate your Single Elimination Knockout bracket and Stage 1 Time Slot Fixtures allocating physical match stations across labs.",
+        "Stage 1 allocates the 13 teams across the 4 available stations (3 in AI Lab, 1 in Meta lab). Teams follow an attendance flow: Scheduled → Called → Ready → Live → Finished → Verified.",
       tips: [
-        "Stage 1 pairs teams into Time Slots (Slot 1 and Slot 2) across AI Lab (3 stations) and Meta lab (1 station).",
-        "If there are an odd number of teams, an automatic Stage 1 BYE is assigned.",
-        "Organizers can swap teams between stations or change the assigned BYE with 1 click in the Fixtures console.",
+        "10-Minute Grace Period: If a called team fails to seat 5 players, record a Forfeit.",
+        "Slot Swaps: Organizers can swap slots between teams if venue logistics require.",
+        "Live matches lock station hardware until verified by an official.",
       ],
     },
     {
-      title: "4. Live Match Operation Desk",
-      subtitle: "6-stage attendance and live scoring",
+      title: "4. Match Control & Attendance",
+      subtitle: "Operate live matches with 1-click status transitions",
       icon: Activity,
       href: "/admin/matches",
-      actionLabel: "Open Live Desk",
+      actionLabel: "Go to Match Control",
       description:
-        "Follow the standard 6-step match lifecycle on the Live Control Desk for each simultaneous station.",
+        "The match operations center is designed for high cadence. Call teams to stations, mark seating ready, launch live match timers, trigger tactical pauses, and verify official final round scores.",
       tips: [
-        "1. Call Teams → 2. Waiting (Seating) → 3. Ready (10 players verified) → 4. Live (In-game).",
-        "5. Finished: Enter final match score (e.g., 13-9).",
-        "6. Verified: Results officially lock and trigger winner advancement in the bracket tree.",
+        "Technical Pauses: Report network or hardware issues to freeze match timers.",
+        "Only VERIFIED scores advance teams forward into the IPL Playoff tree.",
+        "Audit logging cryptographically records the actor and timestamp for every score.",
       ],
     },
     {
-      title: "5. Mobile Marshals & Projector TV",
-      subtitle: "Field staff and spectator screens",
-      icon: Tv,
-      href: "/volunteer",
-      actionLabel: "Open Marshal Mobile",
+      title: "5. IPL 3-Place Playoff Decider",
+      subtitle: "Verified 1st, 2nd, and 3rd rank prizes",
+      icon: Trophy,
+      href: "/admin/bracket",
+      actionLabel: "Go to Bracket Desk",
       description:
-        "VTO provides dedicated views for floor marshals and spectator monitors without requiring full admin access.",
+        "Standard knockout brackets fail to determine 3rd place without an extra match. VTO integrates the IPL Page Playoff format (Q1, Eliminator, Q2, Grand Final) to guarantee verified prize ranking.",
       tips: [
-        "Floor Volunteers: Use /volunteer on smartphones for large touch buttons to update station match statuses.",
-        "Spectator Projectors: Open /display/vto-tourney-1 on venue displays for live auto-refreshing match scores and rankings.",
-        "Audit Trail: Every score verification and manual override is logged at /admin/audit.",
+        "Qualifier 1 (Rank 1 vs 2): Winner reaches Grand Final; loser drops to Qualifier 2.",
+        "Eliminator (Rank 3 vs 4): Loser finishes 4th; winner advances to Qualifier 2.",
+        "Qualifier 2: Winner enters Grand Final; loser officially takes 3rd Place Bronze.",
       ],
     },
   ];
@@ -199,13 +205,16 @@ export function UserGuideModal({
       {/* Trigger Button Variants */}
       {triggerVariant === "navbar" && (
         <button
-          onClick={() => setIsOpen(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-red-600 to-[#ff4655] hover:from-red-500 hover:to-[#ff5865] text-white shadow-md shadow-red-500/20 transition-all border border-red-400/30"
+          onClick={() => {
+            soundFX.playClick();
+            setIsOpen(true);
+          }}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-heading font-bold uppercase tracking-wider bg-valorant-red hover:bg-valorant-redDark text-valorant-ivory transition-all val-chamfer-btn shadow-md shadow-valorant-red/20"
           title="Open User & Operator Guide (Shortcut: ?)"
         >
           <BookOpen className="h-3.5 w-3.5" />
           <span>Guide</span>
-          <span className="hidden xl:inline-block px-1 py-0.2 text-[9px] font-mono bg-black/30 rounded text-red-200">
+          <span className="hidden xl:inline-block px-1 py-0.2 text-[9px] font-mono bg-black/40 text-valorant-ivory">
             ?
           </span>
         </button>
@@ -213,31 +222,39 @@ export function UserGuideModal({
 
       {triggerVariant === "floating" && (
         <button
-          onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#17202a] border border-[#ff4655] text-white text-xs font-black uppercase tracking-wider shadow-2xl shadow-red-500/30 hover:bg-[#ff4655] hover:text-black transition-all group"
+          onClick={() => {
+            soundFX.playClick();
+            setIsOpen(true);
+          }}
+          className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-2.5 bg-valorant-surface border-2 border-valorant-red text-valorant-ivory text-xs font-heading font-bold uppercase tracking-wider shadow-2xl shadow-valorant-red/30 hover:bg-valorant-red hover:text-valorant-ivory transition-all group val-chamfer-btn"
           title="Open User Guide & Onboarding (Shortcut: ?)"
         >
-          <HelpCircle className="h-4 w-4 text-[#ff4655] group-hover:text-black transition-colors" />
+          <HelpCircle className="h-4 w-4 text-valorant-red group-hover:text-valorant-ivory transition-colors" />
           <span>Operator Guide</span>
-          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span className="h-2 w-2 rounded-full bg-valorant-mint animate-pulse"></span>
         </button>
       )}
 
       {/* Guide Modal Backdrop & Dialog */}
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-[#121b24] border border-[#2b3844] rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+          <div className="bg-valorant-surface border-2 border-valorant-red max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden val-chamfer relative">
             {/* Modal Header */}
-            <div className="bg-[#17202a] border-b border-[#2b3844] px-6 py-4 flex items-center justify-between">
+            <div className="bg-valorant-dark border-b border-valorant-border px-6 py-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-lg bg-[#ff4655] flex items-center justify-center text-black font-black text-sm shadow-md">
-                  VTO
+                <div className="relative w-9 h-9 border border-valorant-red p-1 bg-valorant-surface val-chamfer-btn">
+                  <Image
+                    src="/images/valorant_v_logo.svg"
+                    alt="VALORANT"
+                    fill
+                    className="object-contain p-1"
+                  />
                 </div>
                 <div>
-                  <h2 className="text-lg font-black text-white flex items-center gap-2">
+                  <h2 className="text-xl font-display uppercase tracking-wider text-valorant-ivory">
                     VALORANT Tournament Operations Guide
                   </h2>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs font-mono text-valorant-slate">
                     Quick-start walkthrough, tournament invariants, and clean slate controls
                   </p>
                 </div>
@@ -246,7 +263,7 @@ export function UserGuideModal({
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-[#2b3844] transition-colors"
+                  className="p-1.5 text-valorant-slate hover:text-valorant-ivory transition-colors"
                   title="Close Guide (Esc)"
                 >
                   <X className="h-5 w-5" />
@@ -255,13 +272,16 @@ export function UserGuideModal({
             </div>
 
             {/* Sub-Navigation Tabs */}
-            <div className="flex border-b border-[#2b3844] bg-[#0f1923] px-6 py-2 gap-2 overflow-x-auto">
+            <div className="flex border-b border-valorant-border bg-valorant-dark px-6 py-2 gap-2 overflow-x-auto font-mono text-xs">
               <button
-                onClick={() => setActiveTab("tour")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                onClick={() => {
+                  soundFX.playClick();
+                  setActiveTab("tour");
+                }}
+                className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors whitespace-nowrap val-chamfer-btn ${
                   activeTab === "tour"
-                    ? "bg-[#ff4655] text-white"
-                    : "text-gray-400 hover:text-white hover:bg-[#1a232f]"
+                    ? "bg-valorant-red text-valorant-ivory"
+                    : "text-valorant-slate hover:text-valorant-ivory hover:bg-valorant-elevated"
                 }`}
               >
                 <Sparkles className="h-3.5 w-3.5" />
@@ -269,11 +289,14 @@ export function UserGuideModal({
               </button>
 
               <button
-                onClick={() => setActiveTab("rules")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                onClick={() => {
+                  soundFX.playClick();
+                  setActiveTab("rules");
+                }}
+                className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors whitespace-nowrap val-chamfer-btn ${
                   activeTab === "rules"
-                    ? "bg-[#ff4655] text-white"
-                    : "text-gray-400 hover:text-white hover:bg-[#1a232f]"
+                    ? "bg-valorant-red text-valorant-ivory"
+                    : "text-valorant-slate hover:text-valorant-ivory hover:bg-valorant-elevated"
                 }`}
               >
                 <ShieldCheck className="h-3.5 w-3.5" />
@@ -281,11 +304,14 @@ export function UserGuideModal({
               </button>
 
               <button
-                onClick={() => setActiveTab("ipl")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                onClick={() => {
+                  soundFX.playClick();
+                  setActiveTab("ipl");
+                }}
+                className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors whitespace-nowrap val-chamfer-btn ${
                   activeTab === "ipl"
-                    ? "bg-[#ff4655] text-white"
-                    : "text-gray-400 hover:text-white hover:bg-[#1a232f]"
+                    ? "bg-valorant-red text-valorant-ivory"
+                    : "text-valorant-slate hover:text-valorant-ivory hover:bg-valorant-elevated"
                 }`}
               >
                 <Trophy className="h-3.5 w-3.5" />
@@ -293,11 +319,14 @@ export function UserGuideModal({
               </button>
 
               <button
-                onClick={() => setActiveTab("data")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors whitespace-nowrap ${
+                onClick={() => {
+                  soundFX.playClick();
+                  setActiveTab("data");
+                }}
+                className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors whitespace-nowrap val-chamfer-btn ${
                   activeTab === "data"
-                    ? "bg-[#ff4655] text-white"
-                    : "text-gray-400 hover:text-white hover:bg-[#1a232f]"
+                    ? "bg-valorant-red text-valorant-ivory"
+                    : "text-valorant-slate hover:text-valorant-ivory hover:bg-valorant-elevated"
                 }`}
               >
                 <RotateCcw className="h-3.5 w-3.5" />
@@ -308,13 +337,13 @@ export function UserGuideModal({
             {/* Modal Body */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
               {actionMessage && (
-                <div className="p-3.5 rounded-xl bg-emerald-950/70 border border-emerald-500/50 text-emerald-300 text-xs font-bold flex items-center justify-between">
+                <div className="p-3.5 bg-valorant-mint/10 border border-valorant-mint/40 text-valorant-mint text-xs font-mono font-bold flex items-center justify-between">
                   <span>{actionMessage}</span>
                   <button
                     onClick={() => setActionMessage(null)}
-                    className="text-emerald-400 hover:text-white ml-2 text-xs"
+                    className="text-valorant-mint hover:text-valorant-ivory ml-2 text-xs font-mono"
                   >
-                    Dismiss
+                    DISMISS
                   </button>
                 </div>
               )}
@@ -323,7 +352,7 @@ export function UserGuideModal({
               {activeTab === "tour" && (
                 <div className="space-y-6">
                   {/* Step Indicators */}
-                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 font-mono">
                     {steps.map((s, idx) => {
                       const Icon = s.icon;
                       const isCurrent = currentStep === idx;
@@ -332,30 +361,33 @@ export function UserGuideModal({
                       return (
                         <button
                           key={s.title}
-                          onClick={() => setCurrentStep(idx)}
-                          className={`p-2.5 rounded-xl border text-left transition-all ${
+                          onClick={() => {
+                            soundFX.playClick();
+                            setCurrentStep(idx);
+                          }}
+                          className={`p-2.5 border text-left transition-all val-chamfer-btn ${
                             isCurrent
-                              ? "bg-[#1f2731] border-[#ff4655] shadow-md shadow-[#ff4655]/10"
+                              ? "bg-valorant-elevated border-valorant-red shadow-md shadow-valorant-red/10"
                               : isDone
-                              ? "bg-[#17202a] border-emerald-500/40 text-gray-400"
-                              : "bg-[#17202a] border-[#2b3844] text-gray-500"
+                              ? "bg-valorant-surface border-valorant-mint/40 text-valorant-slate"
+                              : "bg-valorant-surface border-valorant-border text-valorant-slate"
                           }`}
                         >
                           <div className="flex items-center justify-between mb-1">
-                            <span className="text-[10px] font-mono font-bold">
+                            <span className="text-[10px] font-bold">
                               Step {idx + 1}
                             </span>
                             {isDone ? (
-                              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                              <CheckCircle2 className="h-3.5 w-3.5 text-valorant-mint" />
                             ) : (
                               <Icon
                                 className={`h-3.5 w-3.5 ${
-                                  isCurrent ? "text-[#ff4655]" : "text-gray-500"
+                                  isCurrent ? "text-valorant-red" : "text-valorant-slate"
                                 }`}
                               />
                             )}
                           </div>
-                          <div className="text-xs font-bold text-white truncate">
+                          <div className="text-xs font-heading font-bold text-valorant-ivory truncate uppercase">
                             {s.title.split(". ")[1]}
                           </div>
                         </button>
@@ -369,43 +401,48 @@ export function UserGuideModal({
                     const Icon = step.icon;
 
                     return (
-                      <div className="bg-[#17202a] border border-[#2b3844] rounded-2xl p-6 space-y-5">
-                        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#2b3844] pb-4">
+                      <div className="bg-valorant-dark border border-valorant-border p-6 space-y-5 val-chamfer">
+                        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-valorant-border pb-4">
                           <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-xl bg-[#ff4655]/10 border border-[#ff4655]/30 flex items-center justify-center text-[#ff4655]">
+                            <div className="h-10 w-10 bg-valorant-surface border border-valorant-red/40 flex items-center justify-center text-valorant-red val-chamfer-btn">
                               <Icon className="h-5 w-5" />
                             </div>
                             <div>
-                              <h3 className="text-lg font-black text-white">{step.title}</h3>
-                              <p className="text-xs text-gray-400">{step.subtitle}</p>
+                              <h3 className="text-xl font-display uppercase tracking-wider text-valorant-ivory">
+                                {step.title}
+                              </h3>
+                              <p className="text-xs font-mono text-valorant-slate">{step.subtitle}</p>
                             </div>
                           </div>
 
                           <Link
                             href={step.href}
-                            onClick={() => setIsOpen(false)}
-                            className="px-3.5 py-1.5 rounded-lg bg-[#ff4655] hover:bg-[#e03d4b] text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors"
+                            onClick={() => {
+                              soundFX.playClick();
+                              setIsOpen(false);
+                            }}
+                            className="px-3.5 py-1.5 bg-valorant-red hover:bg-valorant-redDark text-valorant-ivory text-xs font-heading font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors val-chamfer-btn shadow-md shadow-valorant-red/20"
                           >
                             <span>{step.actionLabel}</span>
                             <ExternalLink className="h-3 w-3" />
                           </Link>
                         </div>
 
-                        <p className="text-sm text-gray-300 leading-relaxed">
+                        <p className="text-sm text-valorant-slate leading-relaxed">
                           {step.description}
                         </p>
 
                         <div className="space-y-2">
-                          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-gray-400">
+                          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-valorant-slate">
                             Key Rules & Guidelines:
                           </span>
                           <ul className="space-y-1.5">
                             {step.tips.map((tip, i) => (
                               <li
                                 key={i}
-                                className="text-xs text-gray-300 flex items-start gap-2 bg-[#0f1923] p-2.5 rounded-lg border border-[#2b3844]"
+                                className="text-xs text-valorant-ivory flex items-start gap-2 bg-valorant-surface p-2.5 border border-valorant-border font-mono"
                               >
-                                <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+                                <CheckCircle2 className="h-4 w-4 text-valorant-mint shrink-0 mt-0.5" />
                                 <span>{tip}</span>
                               </li>
                             ))}
@@ -416,27 +453,31 @@ export function UserGuideModal({
                   })()}
 
                   {/* Step Navigation Controls */}
-                  <div className="flex items-center justify-between pt-2">
+                  <div className="flex items-center justify-between pt-2 font-mono">
                     <button
-                      onClick={() => setCurrentStep((prev) => Math.max(0, prev - 1))}
+                      onClick={() => {
+                        soundFX.playClick();
+                        setCurrentStep((prev) => Math.max(0, prev - 1));
+                      }}
                       disabled={currentStep === 0}
-                      className="px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-bold flex items-center gap-1.5 disabled:opacity-40 transition-colors"
+                      className="px-4 py-2 bg-valorant-dark hover:bg-valorant-elevated text-valorant-slate text-xs font-bold flex items-center gap-1.5 disabled:opacity-40 transition-colors border border-valorant-border val-chamfer-btn"
                     >
-                      <ArrowLeft className="h-3.5 w-3.5" /> Previous Step
+                      <ArrowLeft className="h-3.5 w-3.5" /> PREVIOUS STEP
                     </button>
 
-                    <span className="text-xs font-mono text-gray-400">
-                      Step {currentStep + 1} of {steps.length}
+                    <span className="text-xs text-valorant-slate">
+                      STEP {currentStep + 1} OF {steps.length}
                     </span>
 
                     <button
-                      onClick={() =>
-                        setCurrentStep((prev) => Math.min(steps.length - 1, prev + 1))
-                      }
+                      onClick={() => {
+                        soundFX.playClick();
+                        setCurrentStep((prev) => Math.min(steps.length - 1, prev + 1));
+                      }}
                       disabled={currentStep === steps.length - 1}
-                      className="px-4 py-2 rounded-lg bg-[#ff4655] hover:bg-[#e03d4b] text-white text-xs font-bold flex items-center gap-1.5 disabled:opacity-40 transition-colors"
+                      className="px-4 py-2 bg-valorant-red hover:bg-valorant-redDark text-valorant-ivory text-xs font-bold flex items-center gap-1.5 disabled:opacity-40 transition-colors val-chamfer-btn shadow-md shadow-valorant-red/20"
                     >
-                      Next Step <ArrowRight className="h-3.5 w-3.5" />
+                      NEXT STEP <ArrowRight className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 </div>
@@ -445,52 +486,52 @@ export function UserGuideModal({
               {/* TAB 2: TOURNAMENT INVARIANTS */}
               {activeTab === "rules" && (
                 <div className="space-y-5">
-                  <div className="bg-[#17202a] border border-[#2b3844] rounded-2xl p-5 space-y-4">
-                    <h3 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
-                      <ShieldCheck className="h-4 w-4 text-[#ff4655]" />
+                  <div className="bg-valorant-dark border border-valorant-border p-5 space-y-4 val-chamfer">
+                    <h3 className="text-xl font-display uppercase tracking-wider text-valorant-ivory flex items-center gap-2">
+                      <ShieldCheck className="h-5 w-5 text-valorant-red" />
                       Core Physical & Operational Invariants
                     </h3>
-                    <p className="text-xs text-gray-300">
+                    <p className="text-xs font-mono text-valorant-slate">
                       The tournament operations system enforces deterministic rules to guarantee fair play and prevent scheduling conflicts:
                     </p>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                      <div className="p-3 bg-[#0f1923] rounded-xl border border-[#2b3844] space-y-1">
-                        <div className="font-bold text-white flex items-center gap-1.5">
-                          <Monitor className="h-3.5 w-3.5 text-[#ff4655]" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono">
+                      <div className="p-3 bg-valorant-surface border border-valorant-border space-y-1 val-chamfer-btn">
+                        <div className="font-heading font-bold text-valorant-ivory flex items-center gap-1.5 uppercase">
+                          <Monitor className="h-3.5 w-3.5 text-valorant-red" />
                           10 PCs = 1 Match Station
                         </div>
-                        <div className="text-gray-400 text-[11px]">
+                        <div className="text-valorant-slate text-[11px]">
                           1 VALORANT match requires exactly 2 teams, 10 active players, and 10 operational PCs. An unavailable PC will immediately drop station operational status.
                         </div>
                       </div>
 
-                      <div className="p-3 bg-[#0f1923] rounded-xl border border-[#2b3844] space-y-1">
-                        <div className="font-bold text-white flex items-center gap-1.5">
-                          <Clock className="h-3.5 w-3.5 text-blue-400" />
+                      <div className="p-3 bg-valorant-surface border border-valorant-border space-y-1 val-chamfer-btn">
+                        <div className="font-heading font-bold text-valorant-ivory flex items-center gap-1.5 uppercase">
+                          <Clock className="h-3.5 w-3.5 text-valorant-cyan" />
                           No Simultaneous Overlap
                         </div>
-                        <div className="text-gray-400 text-[11px]">
+                        <div className="text-valorant-slate text-[11px]">
                           A team cannot be scheduled in two places at once. A station cannot host two matches simultaneously. Buffer duration between matches is enforced.
                         </div>
                       </div>
 
-                      <div className="p-3 bg-[#0f1923] rounded-xl border border-[#2b3844] space-y-1">
-                        <div className="font-bold text-white flex items-center gap-1.5">
-                          <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
+                      <div className="p-3 bg-valorant-surface border border-valorant-border space-y-1 val-chamfer-btn">
+                        <div className="font-heading font-bold text-valorant-ivory flex items-center gap-1.5 uppercase">
+                          <AlertTriangle className="h-3.5 w-3.5 text-valorant-gold" />
                           10-Minute Grace Period
                         </div>
-                        <div className="text-gray-400 text-[11px]">
+                        <div className="text-valorant-slate text-[11px]">
                           When teams are called to a station, a 10-minute grace timer begins. Failure to seat 5 verified players enables the coordinator to record an official Forfeit.
                         </div>
                       </div>
 
-                      <div className="p-3 bg-[#0f1923] rounded-xl border border-[#2b3844] space-y-1">
-                        <div className="font-bold text-white flex items-center gap-1.5">
+                      <div className="p-3 bg-valorant-surface border border-valorant-border space-y-1 val-chamfer-btn">
+                        <div className="font-heading font-bold text-valorant-ivory flex items-center gap-1.5 uppercase">
                           <FileText className="h-3.5 w-3.5 text-purple-400" />
                           Cryptographic Audit Logs
                         </div>
-                        <div className="text-gray-400 text-[11px]">
+                        <div className="text-valorant-slate text-[11px]">
                           Every score submission, status transition, team forfeit, and hardware re-allocation creates an immutable audit trail entry visible in /admin/audit.
                         </div>
                       </div>
@@ -502,44 +543,44 @@ export function UserGuideModal({
               {/* TAB 3: IPL PLAYOFFS */}
               {activeTab === "ipl" && (
                 <div className="space-y-5">
-                  <div className="bg-[#17202a] border border-[#2b3844] rounded-2xl p-5 space-y-4">
+                  <div className="bg-valorant-dark border border-valorant-border p-5 space-y-4 val-chamfer">
                     <div className="flex items-center gap-2">
-                      <Trophy className="h-5 w-5 text-amber-400" />
-                      <h3 className="text-base font-black text-white">
+                      <Trophy className="h-5 w-5 text-valorant-gold" />
+                      <h3 className="text-xl font-display uppercase tracking-wider text-valorant-ivory">
                         IPL / Page Playoff System (3-Place Prize Decider)
                       </h3>
                     </div>
 
-                    <p className="text-xs text-gray-300">
+                    <p className="text-xs font-mono text-valorant-slate">
                       Standard single elimination cannot determine a definitive 3rd place without a bronze decider. VTO implements the verified 4-match Page Playoff structure:
                     </p>
 
-                    <div className="space-y-2 text-xs">
-                      <div className="p-3 bg-[#0f1923] rounded-xl border border-[#2b3844] flex items-center justify-between">
+                    <div className="space-y-2 text-xs font-mono">
+                      <div className="p-3 bg-valorant-surface border border-valorant-border flex items-center justify-between val-chamfer-btn">
                         <div>
-                          <span className="font-bold text-white">Qualifier 1 (Rank 1 vs Rank 2):</span>
-                          <span className="text-gray-400 ml-2">Winner reaches Grand Final. Loser gets a second chance in Qualifier 2.</span>
+                          <span className="font-heading font-bold text-valorant-ivory uppercase">Qualifier 1 (Rank 1 vs Rank 2):</span>
+                          <span className="text-valorant-slate ml-2">Winner reaches Grand Final. Loser gets a second chance in Qualifier 2.</span>
                         </div>
                       </div>
 
-                      <div className="p-3 bg-[#0f1923] rounded-xl border border-[#2b3844] flex items-center justify-between">
+                      <div className="p-3 bg-valorant-surface border border-valorant-border flex items-center justify-between val-chamfer-btn">
                         <div>
-                          <span className="font-bold text-white">Eliminator (Rank 3 vs Rank 4):</span>
-                          <span className="text-gray-400 ml-2">Winner advances to Qualifier 2. Loser finishes in 4th place.</span>
+                          <span className="font-heading font-bold text-valorant-ivory uppercase">Eliminator (Rank 3 vs Rank 4):</span>
+                          <span className="text-valorant-slate ml-2">Winner advances to Qualifier 2. Loser finishes in 4th place.</span>
                         </div>
                       </div>
 
-                      <div className="p-3 bg-[#0f1923] rounded-xl border border-[#2b3844] flex items-center justify-between">
+                      <div className="p-3 bg-valorant-surface border border-valorant-border flex items-center justify-between val-chamfer-btn">
                         <div>
-                          <span className="font-bold text-amber-500">Qualifier 2 (Loser Q1 vs Winner Eliminator):</span>
-                          <span className="text-gray-400 ml-2">Winner advances to Grand Final. <strong>Loser officially earns 3rd Place (Bronze Prize)</strong>.</span>
+                          <span className="font-heading font-bold text-amber-500 uppercase">Qualifier 2 (Loser Q1 vs Winner Eliminator):</span>
+                          <span className="text-valorant-slate ml-2">Winner advances to Grand Final. <strong className="text-amber-500">Loser officially earns 3rd Place (Bronze Prize)</strong>.</span>
                         </div>
                       </div>
 
-                      <div className="p-3 bg-[#0f1923] rounded-xl border border-amber-500/40 flex items-center justify-between">
+                      <div className="p-3 bg-valorant-surface border border-valorant-gold/40 flex items-center justify-between val-chamfer-btn">
                         <div>
-                          <span className="font-bold text-amber-400">Grand Final (Winner Q1 vs Winner Q2):</span>
-                          <span className="text-gray-400 ml-2">Winner is <strong>1st Place (Champion)</strong>; Loser is <strong>2nd Place (Silver)</strong>.</span>
+                          <span className="font-heading font-bold text-valorant-gold uppercase">Grand Final (Winner Q1 vs Winner Q2):</span>
+                          <span className="text-valorant-slate ml-2">Winner is <strong className="text-valorant-gold">1st Place (Champion)</strong>; Loser is <strong className="text-slate-300">2nd Place (Silver)</strong>.</span>
                         </div>
                       </div>
                     </div>
@@ -550,26 +591,26 @@ export function UserGuideModal({
               {/* TAB 4: DATA MANAGEMENT (RESET / DEMO) */}
               {activeTab === "data" && (
                 <div className="space-y-6">
-                  <div className="bg-[#17202a] border border-[#2b3844] rounded-2xl p-6 space-y-6">
+                  <div className="bg-valorant-dark border border-valorant-border p-6 space-y-6 val-chamfer">
                     <div>
-                      <h3 className="text-base font-black text-white flex items-center gap-2">
-                        <RotateCcw className="h-5 w-5 text-[#ff4655]" />
+                      <h3 className="text-xl font-display uppercase tracking-wider text-valorant-ivory flex items-center gap-2">
+                        <RotateCcw className="h-5 w-5 text-valorant-red" />
                         Workspace Data Management
                       </h3>
-                      <p className="text-xs text-gray-400 mt-1">
+                      <p className="text-xs font-mono text-valorant-slate mt-1">
                         Switch between a clean slate for real-world tournaments and sample demo data for rehearsals.
                       </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono">
                       {/* Clean Slate Action */}
-                      <div className="p-4 rounded-xl bg-[#0f1923] border border-[#2b3844] space-y-3 flex flex-col justify-between">
+                      <div className="p-4 bg-valorant-surface border border-valorant-border space-y-3 flex flex-col justify-between val-chamfer-btn">
                         <div>
-                          <div className="text-sm font-bold text-white flex items-center gap-2">
-                            <span className="h-2 w-2 rounded-full bg-emerald-400"></span>
+                          <div className="text-sm font-heading font-bold text-valorant-ivory flex items-center gap-2 uppercase">
+                            <span className="h-2 w-2 rounded-full bg-valorant-mint"></span>
                             Reset to Clean Slate
                           </div>
-                          <p className="text-xs text-gray-400 mt-1">
+                          <p className="text-xs text-valorant-slate mt-1">
                             Wipes all teams, rosters, brackets, fixtures, and match results. Keeps physical labs ready for fresh entry.
                           </p>
                         </div>
@@ -577,20 +618,20 @@ export function UserGuideModal({
                         <button
                           onClick={handleResetData}
                           disabled={isResetting}
-                          className="w-full py-2.5 rounded-lg bg-gray-800 hover:bg-rose-950 hover:text-rose-300 hover:border-rose-600 border border-gray-700 text-xs font-bold uppercase tracking-wider text-gray-300 transition-colors disabled:opacity-50"
+                          className="w-full py-2.5 bg-valorant-dark hover:bg-rose-950/60 hover:text-valorant-red border border-valorant-border text-xs font-mono font-bold uppercase tracking-wider text-valorant-slate transition-colors disabled:opacity-50 val-chamfer-btn"
                         >
-                          {isResetting ? "Processing..." : "Wipe All Data (Clean Book)"}
+                          {isResetting ? "Processing..." : "Wipe All Data (Clean Slate)"}
                         </button>
                       </div>
 
                       {/* Load Demo Action */}
-                      <div className="p-4 rounded-xl bg-[#0f1923] border border-[#2b3844] space-y-3 flex flex-col justify-between">
+                      <div className="p-4 bg-valorant-surface border border-valorant-border space-y-3 flex flex-col justify-between val-chamfer-btn">
                         <div>
-                          <div className="text-sm font-bold text-white flex items-center gap-2">
-                            <span className="h-2 w-2 rounded-full bg-amber-400"></span>
+                          <div className="text-sm font-heading font-bold text-valorant-ivory flex items-center gap-2 uppercase">
+                            <span className="h-2 w-2 rounded-full bg-valorant-gold"></span>
                             Load 13 Teams Demo
                           </div>
-                          <p className="text-xs text-gray-400 mt-1">
+                          <p className="text-xs text-valorant-slate mt-1">
                             Populates 13 campus teams, Stage 1 pairings across AI Lab & Meta lab, and seeded brackets for training and inspection.
                           </p>
                         </div>
@@ -598,7 +639,7 @@ export function UserGuideModal({
                         <button
                           onClick={handleLoadDemoData}
                           disabled={isResetting}
-                          className="w-full py-2.5 rounded-lg bg-[#ff4655] hover:bg-[#e03d4b] text-white text-xs font-bold uppercase tracking-wider transition-colors disabled:opacity-50"
+                          className="w-full py-2.5 bg-valorant-red hover:bg-valorant-redDark text-valorant-ivory text-xs font-mono font-bold uppercase tracking-wider transition-colors disabled:opacity-50 val-chamfer-btn shadow-md shadow-valorant-red/20"
                         >
                           {isResetting ? "Processing..." : "Load Demo Tournament"}
                         </button>
@@ -610,18 +651,18 @@ export function UserGuideModal({
             </div>
 
             {/* Modal Footer */}
-            <div className="bg-[#17202a] border-t border-[#2b3844] px-6 py-3.5 flex flex-wrap items-center justify-between text-xs text-gray-400 gap-3">
+            <div className="bg-valorant-dark border-t border-valorant-border px-6 py-3.5 flex flex-wrap items-center justify-between text-xs font-mono text-valorant-slate gap-3">
               <div className="flex items-center gap-2">
-                <span className="font-mono text-[11px] text-gray-500">Shortcut: Press</span>
-                <kbd className="px-1.5 py-0.5 rounded bg-[#0f1923] border border-[#2b3844] text-[10px] font-mono text-gray-300">
+                <span className="text-[11px]">Shortcut: Press</span>
+                <kbd className="px-1.5 py-0.5 bg-valorant-surface border border-valorant-border text-[10px] font-mono text-valorant-ivory">
                   ?
                 </kbd>
-                <span className="font-mono text-[11px] text-gray-500">to toggle this guide anywhere.</span>
+                <span className="text-[11px]">to toggle this guide anywhere.</span>
               </div>
 
               <button
                 onClick={() => setIsOpen(false)}
-                className="px-4 py-1.5 rounded-lg bg-[#0f1923] hover:bg-[#1f2731] border border-[#2b3844] text-xs font-bold text-white transition-colors"
+                className="px-4 py-1.5 bg-valorant-surface hover:bg-valorant-elevated border border-valorant-border text-xs font-mono uppercase tracking-wider text-valorant-ivory transition-colors val-chamfer-btn"
               >
                 Close Guide
               </button>

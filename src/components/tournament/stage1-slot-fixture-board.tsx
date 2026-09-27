@@ -14,14 +14,14 @@ import {
   CheckCircle2,
   Play,
   Pause,
-  AlertTriangle,
   ArrowRightLeft,
   Award,
   Clock,
-  ShieldAlert,
   Info,
-  Layers,
+  X,
 } from "lucide-react";
+import { ValorantButton } from "../ui/valorant-button";
+import { soundFX } from "@/lib/sound/audio";
 
 interface Stage1SlotFixtureBoardProps {
   initialSchedule: Stage1ScheduleResult | null;
@@ -57,6 +57,13 @@ export function Stage1SlotFixtureBoard({
       });
       const data = await res.json();
       if (data.success) {
+        if (status === "Live") {
+          soundFX.playMatchStart();
+        } else if (status === "Paused") {
+          soundFX.playTechPause();
+        } else {
+          soundFX.playClick();
+        }
         setSchedule(data.data);
       }
     } catch (e) {
@@ -81,6 +88,7 @@ export function Stage1SlotFixtureBoard({
       });
       const data = await res.json();
       if (data.success) {
+        soundFX.playClick();
         setSchedule(data.data);
         setIsScoreModalOpen(false);
       }
@@ -102,35 +110,37 @@ export function Stage1SlotFixtureBoard({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "FORFEIT",
-          forfeitingTeamId: forfeitTeamId,
+          forfeitTeamId,
           reason,
         }),
       });
       const data = await res.json();
       if (data.success) {
+        soundFX.playClick();
         setSchedule(data.data);
       }
     } catch (e) {
-      console.error("Failed to record forfeit", e);
+      console.error("Failed to process forfeit", e);
     } finally {
       setIsUpdating(false);
     }
   };
 
-  const handleSetByeTeam = async (teamId: string) => {
+  const handleSetByeTeam = async (byeTeamId: string) => {
     setIsUpdating(true);
     try {
-      const res = await fetch(`/api/tournaments/${tournamentId}/stage1`, {
-        method: "PUT",
+      const res = await fetch(`/api/tournaments/${tournamentId}/stage1/bye`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "SET_BYE", teamId }),
+        body: JSON.stringify({ byeTeamId }),
       });
       const data = await res.json();
       if (data.success) {
+        soundFX.playClick();
         setSchedule(data.data);
       }
     } catch (e) {
-      console.error("Failed to set bye team", e);
+      console.error("Failed to assign BYE team", e);
     } finally {
       setIsUpdating(false);
     }
@@ -140,11 +150,10 @@ export function Stage1SlotFixtureBoard({
     if (!selectedMatch || !swapTargetMatchId) return;
     setIsUpdating(true);
     try {
-      const res = await fetch(`/api/tournaments/${tournamentId}/stage1`, {
-        method: "PUT",
+      const res = await fetch(`/api/tournaments/${tournamentId}/stage1/swap`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          action: "SWAP",
           matchIdA: selectedMatch.matchId,
           slotA: swapSlotA,
           matchIdB: swapTargetMatchId,
@@ -153,6 +162,7 @@ export function Stage1SlotFixtureBoard({
       });
       const data = await res.json();
       if (data.success) {
+        soundFX.playClick();
         setSchedule(data.data);
         setIsSwapModalOpen(false);
       }
@@ -166,39 +176,39 @@ export function Stage1SlotFixtureBoard({
   const getStatusBadge = (status: Stage1MatchStatus) => {
     switch (status) {
       case "Scheduled":
-        return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-900/60 text-blue-300 border border-blue-500/30">Scheduled</span>;
+        return <span className="px-2 py-0.5 font-mono text-[10px] font-bold bg-blue-950/60 text-blue-300 border border-blue-500/30">SCHEDULED</span>;
       case "Teams Called":
-        return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-900/60 text-amber-300 border border-amber-500/30 animate-pulse">Teams Called</span>;
+        return <span className="px-2 py-0.5 font-mono text-[10px] font-bold bg-amber-950/60 text-amber-300 border border-amber-500/30 animate-pulse">TEAMS CALLED</span>;
       case "Waiting":
-        return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-yellow-900/60 text-yellow-300 border border-yellow-500/30">Waiting</span>;
+        return <span className="px-2 py-0.5 font-mono text-[10px] font-bold bg-yellow-950/60 text-yellow-300 border border-yellow-500/30">WAITING</span>;
       case "Ready":
-        return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-900/60 text-indigo-300 border border-indigo-500/30">Ready</span>;
+        return <span className="px-2 py-0.5 font-mono text-[10px] font-bold bg-indigo-950/60 text-indigo-300 border border-indigo-500/30">LOBBY READY</span>;
       case "Live":
-        return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-900/80 text-red-200 border border-red-500 animate-pulse">● LIVE</span>;
+        return <span className="px-2 py-0.5 font-mono text-[10px] font-bold bg-valorant-red text-valorant-ivory border border-valorant-red animate-pulse">● LIVE</span>;
       case "Paused":
-        return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-orange-900/60 text-orange-300 border border-orange-500/30">Paused</span>;
+        return <span className="px-2 py-0.5 font-mono text-[10px] font-bold bg-amber-950/80 text-amber-400 border border-amber-500/50">TECH PAUSE</span>;
       case "Completed":
-        return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-900/60 text-emerald-300 border border-emerald-500/30">Completed</span>;
+        return <span className="px-2 py-0.5 font-mono text-[10px] font-bold bg-valorant-mint/10 text-valorant-mint border border-valorant-mint/40">VERIFIED</span>;
       case "Forfeit":
-        return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-950 text-rose-400 border border-rose-600/40">Forfeit / No Show</span>;
+        return <span className="px-2 py-0.5 font-mono text-[10px] font-bold bg-rose-950 text-rose-400 border border-rose-600/40">FORFEIT / NO SHOW</span>;
       case "BYE":
-        return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-900/60 text-purple-300 border border-purple-500/30">Stage BYE</span>;
+        return <span className="px-2 py-0.5 font-mono text-[10px] font-bold bg-purple-950/60 text-purple-300 border border-purple-500/30">STAGE BYE</span>;
       case "UNUSED":
-        return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-800 text-gray-400 border border-gray-700">Unused Station</span>;
+        return <span className="px-2 py-0.5 font-mono text-[10px] font-bold bg-valorant-dark text-valorant-slate border border-valorant-border">UNUSED STATION</span>;
       default:
-        return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-800 text-gray-300">{status}</span>;
+        return <span className="px-2 py-0.5 font-mono text-[10px] font-bold bg-valorant-dark text-valorant-slate">{status}</span>;
     }
   };
 
   if (!schedule || schedule.allMatches.length === 0) {
     return (
-      <div className="bg-[#17202a] border border-[#2b3844] rounded-xl p-10 text-center space-y-4">
-        <div className="h-12 w-12 rounded-full bg-[#1f2731] border border-[#2b3844] flex items-center justify-center mx-auto text-gray-400">
-          <Calendar className="h-6 w-6 text-gray-400" />
+      <div className="bg-valorant-surface border border-valorant-border p-10 text-center space-y-4 val-chamfer">
+        <div className="h-12 w-12 bg-valorant-dark border border-valorant-border flex items-center justify-center mx-auto text-valorant-slate val-chamfer-btn">
+          <Calendar className="h-6 w-6 text-valorant-slate" />
         </div>
         <div>
-          <h3 className="text-base font-bold text-white">Stage 1 Fixtures Not Generated</h3>
-          <p className="text-xs text-gray-400 mt-1 max-w-md mx-auto">
+          <h3 className="text-xl font-display uppercase tracking-wider text-valorant-ivory">Stage 1 Fixtures Not Generated</h3>
+          <p className="text-xs font-mono text-valorant-slate mt-1 max-w-md mx-auto">
             Stage 1 preliminary slots allocate physical match stations across AI Lab and Meta lab. Register teams to generate your schedule.
           </p>
         </div>
@@ -219,55 +229,55 @@ export function Stage1SlotFixtureBoard({
   return (
     <div className="space-y-6">
       {/* Infrastructure & Capacity Banner */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono">
         {/* AI Lab */}
-        <div className="bg-[#17202a] border border-[#2b3844] rounded-xl p-4 flex items-center justify-between">
+        <div className="bg-valorant-surface border border-valorant-border p-4 flex items-center justify-between val-chamfer-btn">
           <div>
             <div className="flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full bg-emerald-400"></span>
-              <h3 className="text-sm font-black text-white">AI Lab</h3>
+              <span className="h-2 w-2 rounded-full bg-valorant-mint"></span>
+              <h3 className="text-sm font-heading font-bold text-valorant-ivory uppercase">AI Lab</h3>
             </div>
-            <div className="text-xs text-gray-400 mt-1">
-              <span className="font-bold text-white">30 Systems</span> • 3 Matches Capacity
+            <div className="text-xs text-valorant-slate mt-1">
+              <span className="font-bold text-valorant-ivory">30 Systems</span> • 3 Matches Capacity
             </div>
           </div>
           <div className="text-right">
-            <span className="text-[10px] uppercase font-bold text-emerald-400 bg-emerald-950/60 px-2.5 py-1 rounded border border-emerald-500/30">
+            <span className="text-[10px] uppercase font-bold text-valorant-mint bg-valorant-mint/10 px-2.5 py-1 border border-valorant-mint/30">
               3 Stations (M1, M2, M3)
             </span>
           </div>
         </div>
 
         {/* Meta lab */}
-        <div className="bg-[#17202a] border border-[#2b3844] rounded-xl p-4 flex items-center justify-between">
+        <div className="bg-valorant-surface border border-valorant-border p-4 flex items-center justify-between val-chamfer-btn">
           <div>
             <div className="flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full bg-blue-400"></span>
-              <h3 className="text-sm font-black text-white">Meta lab</h3>
+              <span className="h-2 w-2 rounded-full bg-valorant-cyan"></span>
+              <h3 className="text-sm font-heading font-bold text-valorant-ivory uppercase">Meta lab</h3>
             </div>
-            <div className="text-xs text-gray-400 mt-1">
-              <span className="font-bold text-white">10 Systems</span> • 1 Match Capacity
+            <div className="text-xs text-valorant-slate mt-1">
+              <span className="font-bold text-valorant-ivory">10 Systems</span> • 1 Match Capacity
             </div>
           </div>
           <div className="text-right">
-            <span className="text-[10px] uppercase font-bold text-blue-400 bg-blue-950/60 px-2.5 py-1 rounded border border-blue-500/30">
+            <span className="text-[10px] uppercase font-bold text-valorant-cyan bg-valorant-cyan/10 px-2.5 py-1 border border-valorant-cyan/30">
               1 Station (M1)
             </span>
           </div>
         </div>
 
         {/* Total Slot Capacity */}
-        <div className="bg-[#17202a] border border-[#2b3844] rounded-xl p-4 flex items-center justify-between">
+        <div className="bg-valorant-surface border-2 border-valorant-red p-4 flex items-center justify-between val-chamfer-btn">
           <div>
-            <div className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">
+            <div className="text-[10px] uppercase font-bold text-valorant-red tracking-wider">
               Total Capacity Per Slot
             </div>
-            <div className="text-xl font-black text-white mt-0.5">
+            <div className="text-xl font-display uppercase tracking-wider text-valorant-ivory mt-0.5">
               4 Simultaneous Matches
             </div>
           </div>
           <div className="text-right">
-            <span className="text-xs font-mono font-bold text-gray-300">
+            <span className="text-xs font-mono font-bold text-valorant-ivory">
               40 Systems Total
             </span>
           </div>
@@ -275,26 +285,26 @@ export function Stage1SlotFixtureBoard({
       </div>
 
       {/* Organizer Controls Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-4 bg-[#17202a] border border-[#2b3844] rounded-xl p-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-valorant-surface border border-valorant-border p-4 val-chamfer-btn">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="text-xs text-gray-400 flex items-center gap-2">
-            <Info className="h-4 w-4 text-[#ff4655]" />
+          <div className="text-xs font-mono text-valorant-slate flex items-center gap-2">
+            <Info className="h-4 w-4 text-valorant-red" />
             <span>
-              Stage 1: <strong className="text-white">{schedule.totalTeams} Teams</strong> = {playableMatches.length} Matches {schedule.byeTeam ? "+ 1 BYE" : ""} across {schedule.slots.length} Time Slots.
+              Stage 1: <strong className="text-valorant-ivory">{schedule.totalTeams} Teams</strong> = {playableMatches.length} Matches {schedule.byeTeam ? "+ 1 BYE" : ""} across {schedule.slots.length} Time Slots.
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 font-mono">
           {/* Change BYE assignment */}
           <div className="flex items-center gap-2">
-            <label className="text-[11px] font-bold text-gray-400 uppercase">
+            <label className="text-[11px] font-bold text-valorant-slate uppercase">
               Assigned BYE:
             </label>
             <select
               value={schedule.byeTeam?.id || ""}
               onChange={(e) => handleSetByeTeam(e.target.value)}
-              className="bg-[#0f1923] border border-[#2b3844] rounded px-3 py-1.5 text-xs text-white font-bold"
+              className="bg-valorant-dark border border-valorant-border px-3 py-1.5 text-xs text-valorant-ivory font-bold focus:border-valorant-red focus:outline-none"
             >
               {teamsInSchedule.map((t) => (
                 <option key={t.id} value={t.id}>
@@ -311,21 +321,21 @@ export function Stage1SlotFixtureBoard({
         {schedule.slots.map((slot) => (
           <div
             key={slot.slotNumber}
-            className="bg-[#17202a] border border-[#2b3844] rounded-xl overflow-hidden shadow-lg"
+            className="bg-valorant-surface border border-valorant-border overflow-hidden val-chamfer"
           >
             {/* Slot Header */}
-            <div className="bg-[#0f1923] px-6 py-4 border-b border-[#2b3844] flex flex-wrap items-center justify-between gap-4">
+            <div className="bg-valorant-dark px-6 py-4 border-b border-valorant-border flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <span className="h-3 w-3 rounded-full bg-[#ff4655]"></span>
-                <h2 className="text-lg font-black text-white">{slot.name}</h2>
-                <span className="text-xs text-gray-400 font-mono">
+                <span className="h-3 w-3 bg-valorant-red"></span>
+                <h2 className="text-xl font-display uppercase tracking-wider text-valorant-ivory">{slot.name}</h2>
+                <span className="text-xs text-valorant-slate font-mono">
                   {slot.activeMatches} Matches Active • {slot.byeCount} BYE • {slot.unusedCount} Unused
                 </span>
               </div>
 
-              <div className="flex items-center gap-4 text-xs">
-                <div className="flex items-center gap-1.5 text-gray-300 font-mono">
-                  <Clock className="h-3.5 w-3.5 text-gray-500" />
+              <div className="flex items-center gap-4 text-xs font-mono text-valorant-slate">
+                <div className="flex items-center gap-1.5">
+                  <Clock className="h-3.5 w-3.5 text-valorant-slate" />
                   <span>Duration: 45 min match + 15 min buffer</span>
                 </div>
               </div>
@@ -334,27 +344,25 @@ export function Stage1SlotFixtureBoard({
             {/* Match Grid within Slot (Max 4 matches: 3 AI Lab, 1 Meta lab) */}
             <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {slot.matches.map((match) => {
-                const isAILab = match.labName === "AI Lab";
-
                 if (match.isUnused) {
                   return (
                     <div
                       key={match.matchId}
-                      className="border border-dashed border-[#2b3844] bg-[#0f1923]/40 rounded-xl p-4 flex flex-col justify-between opacity-60 hover:opacity-100 transition-opacity"
+                      className="border border-dashed border-valorant-border bg-valorant-dark/40 p-4 flex flex-col justify-between opacity-60 hover:opacity-100 transition-opacity val-chamfer-btn"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-mono font-bold text-gray-500">
+                        <span className="text-[10px] font-mono font-bold text-valorant-slate">
                           {match.labName} • {match.stationName}
                         </span>
                         {getStatusBadge("UNUSED")}
                       </div>
-                      <div className="my-6 text-center text-xs text-gray-500">
+                      <div className="my-6 text-center text-xs font-mono text-valorant-slate">
                         Station Unoccupied
-                        <div className="text-[10px] text-gray-600 mt-1">
+                        <div className="text-[10px] text-valorant-slate/80 mt-1">
                           Available for team warm-ups
                         </div>
                       </div>
-                      <div className="text-[10px] text-gray-600 text-center">
+                      <div className="text-[10px] font-mono text-valorant-slate text-center">
                         Hardware Ready (10 PCs)
                       </div>
                     </div>
@@ -365,7 +373,7 @@ export function Stage1SlotFixtureBoard({
                   return (
                     <div
                       key={match.matchId}
-                      className="border border-purple-500/50 bg-[#1e172a] rounded-xl p-4 flex flex-col justify-between shadow-md"
+                      className="border border-purple-500/50 bg-purple-950/20 p-4 flex flex-col justify-between shadow-md val-chamfer-btn"
                     >
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] font-mono font-bold text-purple-300">
@@ -375,19 +383,19 @@ export function Stage1SlotFixtureBoard({
                       </div>
 
                       <div className="my-5 text-center space-y-2">
-                        <div className="text-base font-black text-white">
+                        <div className="text-base font-display uppercase tracking-wider text-valorant-ivory">
                           {match.teamA?.name}
                         </div>
-                        <div className="text-xs text-purple-300 flex items-center justify-center gap-1 font-bold">
+                        <div className="text-xs text-purple-300 flex items-center justify-center gap-1 font-mono font-bold">
                           <Award className="h-3.5 w-3.5" />
                           Automatic Stage 1 BYE
                         </div>
-                        <p className="text-[11px] text-gray-400">
+                        <p className="text-[11px] font-mono text-valorant-slate">
                           Advances directly to the next stage without match play.
                         </p>
                       </div>
 
-                      <div className="text-[10px] text-gray-400 border-t border-purple-500/20 pt-2 text-center">
+                      <div className="text-[10px] font-mono text-valorant-slate border-t border-purple-500/20 pt-2 text-center">
                         Seed #{match.teamA?.seed} • Official Roster Registered
                       </div>
                     </div>
@@ -397,22 +405,22 @@ export function Stage1SlotFixtureBoard({
                 return (
                   <div
                     key={match.matchId}
-                    className={`border rounded-xl p-4 flex flex-col justify-between transition-all ${
+                    className={`border p-4 flex flex-col justify-between transition-all val-chamfer-btn ${
                       match.status === "Live"
-                        ? "bg-[#17202a] border-red-500 shadow-lg shadow-red-500/10"
+                        ? "bg-valorant-surface border-2 border-valorant-red shadow-lg shadow-valorant-red/20"
                         : match.status === "Ready"
-                        ? "bg-[#17202a] border-indigo-500/60"
+                        ? "bg-valorant-surface border-indigo-500/60"
                         : match.status === "Completed"
-                        ? "bg-[#17202a] border-emerald-500/40"
-                        : "bg-[#17202a] border-[#2b3844]"
+                        ? "bg-valorant-surface border-valorant-mint/50"
+                        : "bg-valorant-surface border-valorant-border"
                     }`}
                   >
                     {/* Station & Status Header */}
                     <div>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1.5">
-                          <Monitor className="h-3.5 w-3.5 text-[#ff4655]" />
-                          <span className="text-[11px] font-mono font-bold text-gray-300">
+                          <Monitor className="h-3.5 w-3.5 text-valorant-red" />
+                          <span className="text-[11px] font-mono font-bold text-valorant-slate">
                             {match.labName} — {match.stationName}
                           </span>
                         </div>
@@ -420,28 +428,28 @@ export function Stage1SlotFixtureBoard({
                       </div>
 
                       {/* Teams & Score */}
-                      <div className="mt-4 space-y-2">
-                        <div className="flex items-center justify-between bg-[#0f1923] p-2.5 rounded-lg border border-[#2b3844]/60">
-                          <div className="truncate font-bold text-white text-xs">
+                      <div className="mt-4 space-y-2 font-mono">
+                        <div className="flex items-center justify-between bg-valorant-dark p-2.5 border-l-4 border-valorant-red border-y border-r border-valorant-border">
+                          <div className="truncate font-heading font-bold text-valorant-ivory text-xs uppercase">
                             {match.teamA?.name}
                           </div>
                           {match.result && (
-                            <span className="text-sm font-black text-white font-mono ml-2">
+                            <span className="text-sm font-black text-valorant-ivory font-mono ml-2">
                               {match.result.teamAScore}
                             </span>
                           )}
                         </div>
 
-                        <div className="text-center text-[10px] uppercase font-bold text-gray-500 tracking-wider">
-                          VS
+                        <div className="text-center text-[10px] font-mono font-bold text-valorant-slate tracking-wider">
+                          // VS //
                         </div>
 
-                        <div className="flex items-center justify-between bg-[#0f1923] p-2.5 rounded-lg border border-[#2b3844]/60">
-                          <div className="truncate font-bold text-white text-xs">
+                        <div className="flex items-center justify-between bg-valorant-dark p-2.5 border-l-4 border-valorant-cyan border-y border-r border-valorant-border">
+                          <div className="truncate font-heading font-bold text-valorant-ivory text-xs uppercase">
                             {match.teamB?.name}
                           </div>
                           {match.result && (
-                            <span className="text-sm font-black text-white font-mono ml-2">
+                            <span className="text-sm font-black text-valorant-ivory font-mono ml-2">
                               {match.result.teamBScore}
                             </span>
                           )}
@@ -450,7 +458,7 @@ export function Stage1SlotFixtureBoard({
 
                       {/* Winner callout if finished */}
                       {match.result?.winnerId && (
-                        <div className="mt-2 text-[11px] font-bold text-emerald-400 flex items-center justify-center gap-1 bg-emerald-950/40 py-1 rounded border border-emerald-500/20">
+                        <div className="mt-2 text-[11px] font-mono font-bold text-valorant-mint flex items-center justify-center gap-1 bg-valorant-mint/10 py-1 border border-valorant-mint/30">
                           <CheckCircle2 className="h-3 w-3" />
                           Winner: {match.result.winnerId === match.teamA?.id ? match.teamA?.name : match.teamB?.name}
                         </div>
@@ -458,23 +466,24 @@ export function Stage1SlotFixtureBoard({
                     </div>
 
                     {/* Action Controls */}
-                    <div className="mt-4 pt-3 border-t border-[#2b3844]/60 space-y-1.5">
+                    <div className="mt-4 pt-3 border-t border-valorant-border space-y-1.5 font-mono">
                       {match.status === "Scheduled" && (
                         <div className="grid grid-cols-2 gap-2">
                           <button
                             disabled={isUpdating}
                             onClick={() => handleUpdateStatus(match.matchId, "Teams Called")}
-                            className="py-1.5 px-2 rounded bg-blue-600 hover:bg-blue-500 text-white font-bold text-[11px] uppercase tracking-wider flex items-center justify-center gap-1 transition-colors"
+                            className="py-1.5 px-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-[11px] uppercase tracking-wider flex items-center justify-center gap-1 transition-colors val-chamfer-btn"
                           >
                             <PhoneCall className="h-3 w-3" />
                             Call
                           </button>
                           <button
                             onClick={() => {
+                              soundFX.playClick();
                               setSelectedMatch(match);
                               setIsSwapModalOpen(true);
                             }}
-                            className="py-1.5 px-2 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold text-[11px] uppercase tracking-wider flex items-center justify-center gap-1 transition-colors"
+                            className="py-1.5 px-2 bg-valorant-dark hover:bg-valorant-elevated text-valorant-ivory font-bold text-[11px] uppercase tracking-wider flex items-center justify-center gap-1 transition-colors border border-valorant-border val-chamfer-btn"
                           >
                             <ArrowRightLeft className="h-3 w-3" />
                             Swap
@@ -487,7 +496,7 @@ export function Stage1SlotFixtureBoard({
                           <button
                             disabled={isUpdating}
                             onClick={() => handleUpdateStatus(match.matchId, "Ready")}
-                            className="w-full py-1.5 rounded bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[11px] uppercase tracking-wider flex items-center justify-center gap-1 transition-colors"
+                            className="w-full py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[11px] uppercase tracking-wider flex items-center justify-center gap-1 transition-colors val-chamfer-btn"
                           >
                             <CheckCircle2 className="h-3 w-3" />
                             Mark Both Ready
@@ -513,7 +522,7 @@ export function Stage1SlotFixtureBoard({
                         <button
                           disabled={isUpdating}
                           onClick={() => handleUpdateStatus(match.matchId, "Live")}
-                          className="w-full py-2 rounded bg-[#ff4655] hover:bg-[#e03d4b] text-white font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1 transition-colors shadow-md shadow-[#ff4655]/20"
+                          className="w-full py-2 bg-valorant-red hover:bg-valorant-redDark text-valorant-ivory font-heading font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1 transition-colors shadow-md shadow-valorant-red/30 val-chamfer-btn"
                         >
                           <Play className="h-3.5 w-3.5" />
                           Start Match (Live)
@@ -525,17 +534,18 @@ export function Stage1SlotFixtureBoard({
                           <button
                             disabled={isUpdating}
                             onClick={() => handleUpdateStatus(match.matchId, "Paused")}
-                            className="py-1.5 rounded bg-amber-600 hover:bg-amber-500 text-white font-bold text-[11px] uppercase tracking-wider flex items-center justify-center gap-1"
+                            className="py-1.5 bg-amber-600 hover:bg-amber-500 text-white font-bold text-[11px] uppercase tracking-wider flex items-center justify-center gap-1 val-chamfer-btn"
                           >
                             <Pause className="h-3 w-3" />
                             Pause
                           </button>
                           <button
                             onClick={() => {
+                              soundFX.playClick();
                               setSelectedMatch(match);
                               setIsScoreModalOpen(true);
                             }}
-                            className="py-1.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] uppercase tracking-wider flex items-center justify-center gap-1"
+                            className="py-1.5 bg-valorant-mint hover:bg-emerald-400 text-black font-bold text-[11px] uppercase tracking-wider flex items-center justify-center gap-1 val-chamfer-btn"
                           >
                             Score
                           </button>
@@ -546,7 +556,7 @@ export function Stage1SlotFixtureBoard({
                         <button
                           disabled={isUpdating}
                           onClick={() => handleUpdateStatus(match.matchId, "Live")}
-                          className="w-full py-1.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] uppercase tracking-wider flex items-center justify-center gap-1"
+                          className="w-full py-1.5 bg-valorant-mint hover:bg-emerald-400 text-black font-bold text-[11px] uppercase tracking-wider flex items-center justify-center gap-1 val-chamfer-btn"
                         >
                           <Play className="h-3 w-3" />
                           Resume Play
@@ -556,12 +566,13 @@ export function Stage1SlotFixtureBoard({
                       {match.status === "Completed" && (
                         <button
                           onClick={() => {
+                            soundFX.playClick();
                             setSelectedMatch(match);
                             setScoreA(match.result?.teamAScore || 13);
                             setScoreB(match.result?.teamBScore || 9);
                             setIsScoreModalOpen(true);
                           }}
-                          className="w-full py-1 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 text-[10px] font-bold uppercase transition-colors"
+                          className="w-full py-1 bg-valorant-dark hover:bg-valorant-elevated text-valorant-slate text-[10px] font-bold uppercase transition-colors border border-valorant-border val-chamfer-btn"
                         >
                           Edit Score
                         </button>
@@ -577,56 +588,66 @@ export function Stage1SlotFixtureBoard({
 
       {/* Score Submission Modal */}
       {isScoreModalOpen && selectedMatch && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
-          <div className="bg-[#17202a] border border-[#2b3844] rounded-xl max-w-md w-full p-6 space-y-4">
-            <h3 className="text-base font-black text-white flex items-center gap-2">
-              <Award className="h-5 w-5 text-[#ff4655]" />
-              Record Match Result
-            </h3>
-            <p className="text-xs text-gray-400">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm">
+          <div className="bg-valorant-surface border-2 border-valorant-red max-w-md w-full p-6 space-y-4 val-chamfer shadow-2xl shadow-valorant-red/30">
+            <div className="flex items-center justify-between border-b border-valorant-border pb-3">
+              <h3 className="text-xl font-display uppercase tracking-wider text-valorant-ivory flex items-center gap-2">
+                <Award className="h-5 w-5 text-valorant-red" />
+                Record Match Result
+              </h3>
+              <button
+                onClick={() => setIsScoreModalOpen(false)}
+                className="text-valorant-slate hover:text-valorant-ivory"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <p className="text-xs font-mono text-valorant-slate">
               Input final map rounds for {selectedMatch.labName} — {selectedMatch.stationName}.
             </p>
 
-            <div className="space-y-3 py-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-bold text-white">{selectedMatch.teamA?.name}</span>
+            <div className="space-y-3 py-2 font-mono">
+              <div className="flex items-center justify-between bg-valorant-dark p-3 border border-valorant-border">
+                <span className="text-sm font-heading font-bold text-valorant-ivory uppercase">{selectedMatch.teamA?.name}</span>
                 <input
                   type="number"
                   min="0"
                   max="30"
                   value={scoreA}
                   onChange={(e) => setScoreA(Number(e.target.value))}
-                  className="w-16 bg-[#0f1923] border border-[#2b3844] rounded px-3 py-1.5 text-center text-white font-mono font-bold"
+                  className="w-16 bg-valorant-surface border border-valorant-border px-3 py-1.5 text-center text-valorant-ivory font-mono font-bold focus:border-valorant-red focus:outline-none"
                 />
               </div>
 
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-bold text-white">{selectedMatch.teamB?.name}</span>
+              <div className="flex items-center justify-between bg-valorant-dark p-3 border border-valorant-border">
+                <span className="text-sm font-heading font-bold text-valorant-ivory uppercase">{selectedMatch.teamB?.name}</span>
                 <input
                   type="number"
                   min="0"
                   max="30"
                   value={scoreB}
                   onChange={(e) => setScoreB(Number(e.target.value))}
-                  className="w-16 bg-[#0f1923] border border-[#2b3844] rounded px-3 py-1.5 text-center text-white font-mono font-bold"
+                  className="w-16 bg-valorant-surface border border-valorant-border px-3 py-1.5 text-center text-valorant-ivory font-mono font-bold focus:border-valorant-red focus:outline-none"
                 />
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#2b3844]">
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-valorant-border">
               <button
                 onClick={() => setIsScoreModalOpen(false)}
-                className="px-4 py-2 rounded bg-gray-800 hover:bg-gray-700 text-xs font-bold text-white"
+                className="px-4 py-2 text-xs font-mono uppercase tracking-wider text-valorant-slate hover:text-valorant-ivory"
               >
                 Cancel
               </button>
-              <button
+              <ValorantButton
                 disabled={isUpdating || scoreA === scoreB}
                 onClick={handleSubmitScore}
-                className="px-4 py-2 rounded bg-[#ff4655] hover:bg-[#e03d4b] text-xs font-bold text-white disabled:opacity-50"
+                variant="primary"
+                size="sm"
               >
                 Verify & Save Result
-              </button>
+              </ValorantButton>
             </div>
           </div>
         </div>
@@ -634,23 +655,32 @@ export function Stage1SlotFixtureBoard({
 
       {/* Team Swap Override Modal */}
       {isSwapModalOpen && selectedMatch && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
-          <div className="bg-[#17202a] border border-[#2b3844] rounded-xl max-w-md w-full p-6 space-y-4">
-            <h3 className="text-base font-black text-white flex items-center gap-2">
-              <ArrowRightLeft className="h-5 w-5 text-[#ff4655]" />
-              Manual Fixture Override / Team Swap
-            </h3>
-            <p className="text-xs text-gray-400">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm">
+          <div className="bg-valorant-surface border-2 border-valorant-red max-w-md w-full p-6 space-y-4 val-chamfer shadow-2xl shadow-valorant-red/30">
+            <div className="flex items-center justify-between border-b border-valorant-border pb-3">
+              <h3 className="text-xl font-display uppercase tracking-wider text-valorant-ivory flex items-center gap-2">
+                <ArrowRightLeft className="h-5 w-5 text-valorant-red" />
+                Manual Fixture Override / Team Swap
+              </h3>
+              <button
+                onClick={() => setIsSwapModalOpen(false)}
+                className="text-valorant-slate hover:text-valorant-ivory"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <p className="text-xs font-mono text-valorant-slate">
               Swap a team in {selectedMatch.labName} ({selectedMatch.stationName}) with another match.
             </p>
 
-            <div className="space-y-3 py-2 text-xs">
+            <div className="space-y-3 py-2 text-xs font-mono">
               <div>
-                <label className="block text-gray-400 font-bold mb-1">Source Team to Swap:</label>
+                <label className="block text-valorant-slate font-bold mb-1 uppercase">Source Team to Swap:</label>
                 <select
                   value={swapSlotA}
                   onChange={(e) => setSwapSlotA(e.target.value as "TEAM_A" | "TEAM_B")}
-                  className="w-full bg-[#0f1923] border border-[#2b3844] rounded px-3 py-2 text-white font-bold"
+                  className="w-full bg-valorant-dark border border-valorant-border px-3 py-2 text-valorant-ivory font-bold focus:border-valorant-red focus:outline-none"
                 >
                   <option value="TEAM_A">{selectedMatch.teamA?.name} (Team A)</option>
                   <option value="TEAM_B">{selectedMatch.teamB?.name} (Team B)</option>
@@ -658,11 +688,11 @@ export function Stage1SlotFixtureBoard({
               </div>
 
               <div>
-                <label className="block text-gray-400 font-bold mb-1">Target Match to Swap With:</label>
+                <label className="block text-valorant-slate font-bold mb-1 uppercase">Target Match to Swap With:</label>
                 <select
                   value={swapTargetMatchId}
                   onChange={(e) => setSwapTargetMatchId(e.target.value)}
-                  className="w-full bg-[#0f1923] border border-[#2b3844] rounded px-3 py-2 text-white font-bold"
+                  className="w-full bg-valorant-dark border border-valorant-border px-3 py-2 text-valorant-ivory font-bold focus:border-valorant-red focus:outline-none"
                 >
                   <option value="">Select Match...</option>
                   {playableMatches
@@ -677,11 +707,11 @@ export function Stage1SlotFixtureBoard({
 
               {swapTargetMatchId && (
                 <div>
-                  <label className="block text-gray-400 font-bold mb-1">Target Team Slot:</label>
+                  <label className="block text-valorant-slate font-bold mb-1 uppercase">Target Team Slot:</label>
                   <select
                     value={swapSlotB}
                     onChange={(e) => setSwapSlotB(e.target.value as "TEAM_A" | "TEAM_B")}
-                    className="w-full bg-[#0f1923] border border-[#2b3844] rounded px-3 py-2 text-white font-bold"
+                    className="w-full bg-valorant-dark border border-valorant-border px-3 py-2 text-valorant-ivory font-bold focus:border-valorant-red focus:outline-none"
                   >
                     <option value="TEAM_A">Team A</option>
                     <option value="TEAM_B">Team B</option>
@@ -690,20 +720,21 @@ export function Stage1SlotFixtureBoard({
               )}
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#2b3844]">
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-valorant-border">
               <button
                 onClick={() => setIsSwapModalOpen(false)}
-                className="px-4 py-2 rounded bg-gray-800 hover:bg-gray-700 text-xs font-bold text-white"
+                className="px-4 py-2 text-xs font-mono uppercase tracking-wider text-valorant-slate hover:text-valorant-ivory"
               >
                 Cancel
               </button>
-              <button
+              <ValorantButton
                 disabled={isUpdating || !swapTargetMatchId}
                 onClick={handleExecuteSwap}
-                className="px-4 py-2 rounded bg-[#ff4655] hover:bg-[#e03d4b] text-xs font-bold text-white disabled:opacity-50"
+                variant="primary"
+                size="sm"
               >
                 Execute Swap
-              </button>
+              </ValorantButton>
             </div>
           </div>
         </div>
