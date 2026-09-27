@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import { ScheduledFixture } from "@/lib/scheduling/types";
@@ -23,7 +24,12 @@ export default function VolunteerOperationsPage() {
   const tournamentId = "vto-tourney-1";
   const [fixtures, setFixtures] = useState<ScheduledFixture[]>([]);
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
   const [activeMatch, setActiveMatch] = useState<ScheduledFixture | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Score dialog state
   const [showScoreModal, setShowScoreModal] = useState(false);
@@ -339,65 +345,68 @@ export default function VolunteerOperationsPage() {
       </main>
 
       {/* Score Entry Dialog */}
-      {showScoreModal && activeMatch && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
-          <TacticalCard
-            telemetryTag="RESULT_ENTRY // MARSHAL_SUBMIT"
-            cornerColor="mint"
-            className="max-w-sm w-full p-6 space-y-5"
-          >
-            <h3 className="text-lg font-display font-black text-valorant-ivory uppercase tracking-wider border-b border-valorant-border pb-2">
-              Submit Score: {activeMatch.matchCode}
-            </h3>
+      {showScoreModal && activeMatch && mounted && createPortal(
+        <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="min-h-full flex items-center justify-center p-4">
+            <TacticalCard
+              telemetryTag="RESULT_ENTRY // MARSHAL_SUBMIT"
+              cornerColor="mint"
+              className="max-w-sm w-full p-6 space-y-5 my-auto"
+            >
+              <h3 className="text-lg font-display font-black text-valorant-ivory uppercase tracking-wider border-b border-valorant-border pb-2">
+                Submit Score: {activeMatch.matchCode}
+              </h3>
 
-            <div className="space-y-3.5">
-              <div>
-                <label className="block text-xs font-heading font-bold uppercase tracking-wider text-valorant-ivory mb-1 truncate">
-                  {activeMatch.teamAName} (Rounds Won)
-                </label>
-                <input
-                  type="number"
-                  value={scoreA}
-                  onChange={(e) => setScoreA(e.target.value)}
-                  className="w-full h-12 bg-valorant-dark border border-valorant-border rounded-none px-3 font-mono font-bold text-xl text-valorant-ivory focus:border-valorant-red focus:outline-none"
-                  min="0"
-                  max="30"
-                />
+              <div className="space-y-3.5">
+                <div>
+                  <label className="block text-xs font-heading font-bold uppercase tracking-wider text-valorant-ivory mb-1 truncate">
+                    {activeMatch.teamAName} (Rounds Won)
+                  </label>
+                  <input
+                    type="number"
+                    value={scoreA}
+                    onChange={(e) => setScoreA(e.target.value)}
+                    className="w-full h-12 bg-valorant-dark border border-valorant-border rounded-none px-3 font-mono font-bold text-xl text-valorant-ivory focus:border-valorant-red focus:outline-none"
+                    min="0"
+                    max="30"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-heading font-bold uppercase tracking-wider text-valorant-ivory mb-1 truncate">
+                    {activeMatch.teamBName} (Rounds Won)
+                  </label>
+                  <input
+                    type="number"
+                    value={scoreB}
+                    onChange={(e) => setScoreB(e.target.value)}
+                    className="w-full h-12 bg-valorant-dark border border-valorant-border rounded-none px-3 font-mono font-bold text-xl text-valorant-ivory focus:border-valorant-red focus:outline-none"
+                    min="0"
+                    max="30"
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-heading font-bold uppercase tracking-wider text-valorant-ivory mb-1 truncate">
-                  {activeMatch.teamBName} (Rounds Won)
-                </label>
-                <input
-                  type="number"
-                  value={scoreB}
-                  onChange={(e) => setScoreB(e.target.value)}
-                  className="w-full h-12 bg-valorant-dark border border-valorant-border rounded-none px-3 font-mono font-bold text-xl text-valorant-ivory focus:border-valorant-red focus:outline-none"
-                  min="0"
-                  max="30"
-                />
+              <div className="grid grid-cols-2 gap-2.5 pt-2">
+                <ValorantButton
+                  variant="ghost"
+                  onClick={() => setShowScoreModal(false)}
+                  className="w-full border border-valorant-border"
+                >
+                  Cancel
+                </ValorantButton>
+                <ValorantButton
+                  variant="mint"
+                  onClick={handleFinishMatch}
+                  className="w-full"
+                >
+                  Submit Score
+                </ValorantButton>
               </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2.5 pt-2">
-              <ValorantButton
-                variant="ghost"
-                onClick={() => setShowScoreModal(false)}
-                className="w-full border border-valorant-border"
-              >
-                Cancel
-              </ValorantButton>
-              <ValorantButton
-                variant="mint"
-                onClick={handleFinishMatch}
-                className="w-full"
-              >
-                Submit Score
-              </ValorantButton>
-            </div>
-          </TacticalCard>
-        </div>
+            </TacticalCard>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { BracketStructure, BracketMatch } from "@/lib/tournament/types";
 import { StatusBadge } from "../ui/status-badge";
 import { ValorantButton } from "../ui/valorant-button";
@@ -15,11 +16,16 @@ interface BracketViewerProps {
 
 export function BracketViewer({ initialBracket, tournamentId }: BracketViewerProps) {
   const [bracket, setBracket] = useState<BracketStructure | null>(initialBracket);
+  const [mounted, setMounted] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [selectedMatch, setSelectedMatch] = useState<BracketMatch | null>(null);
   const [scoreA, setScoreA] = useState("13");
   const [scoreB, setScoreB] = useState("8");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleRegenerateBracket = async () => {
     if (!confirm("Are you sure you want to regenerate the bracket? This will reset match assignments.")) return;
@@ -232,9 +238,10 @@ export function BracketViewer({ initialBracket, tournamentId }: BracketViewerPro
       </div>
 
       {/* Score Modal */}
-      {selectedMatch && (
-        <div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4">
-          <div className="bg-valorant-surface border-2 border-valorant-red max-w-md w-full p-6 space-y-4 val-chamfer relative shadow-2xl shadow-valorant-red/30">
+      {selectedMatch && mounted && createPortal(
+        <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="min-h-full flex items-center justify-center p-4">
+            <div className="bg-valorant-surface border-2 border-valorant-red max-w-md w-full p-6 space-y-4 val-chamfer relative shadow-2xl shadow-valorant-red/30 my-auto">
             <div className="flex items-center justify-between border-b border-valorant-border pb-3">
               <div>
                 <div className="text-[10px] font-mono text-valorant-red uppercase tracking-widest font-bold">
@@ -314,7 +321,9 @@ export function BracketViewer({ initialBracket, tournamentId }: BracketViewerPro
             </button>
           </div>
         </div>
-      )}
+      </div>,
+      document.body
+    )}
     </div>
   );
 }

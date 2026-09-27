@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import { StoredTeam } from "@/lib/store/tournament-store";
 import { StatusBadge } from "../ui/status-badge";
@@ -27,7 +28,12 @@ interface TeamRosterManagerProps {
 
 export function TeamRosterManager({ initialTeams, tournamentId }: TeamRosterManagerProps) {
   const [teams, setTeams] = useState<StoredTeam[]>(initialTeams);
+  const [mounted, setMounted] = useState(false);
   const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   const [selectedTeam, setSelectedTeam] = useState<StoredTeam | null>(initialTeams[0] || null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [isAddTeamModalOpen, setIsAddTeamModalOpen] = useState(false);
@@ -363,9 +369,10 @@ export function TeamRosterManager({ initialTeams, tournamentId }: TeamRosterMana
       </div>
 
       {/* Add Team Modal */}
-      {isAddTeamModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm">
-          <div className="bg-valorant-surface border-2 border-valorant-red max-w-md w-full p-6 space-y-4 val-chamfer shadow-2xl shadow-valorant-red/30">
+      {isAddTeamModalOpen && mounted && createPortal(
+        <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="min-h-full flex items-center justify-center p-4">
+            <div className="bg-valorant-surface border-2 border-valorant-red max-w-md w-full p-6 space-y-4 val-chamfer shadow-2xl shadow-valorant-red/30 my-auto">
             <div className="flex items-center justify-between border-b border-valorant-border pb-3">
               <h3 className="text-xl font-display uppercase tracking-wider text-valorant-ivory flex items-center gap-2">
                 <Plus className="h-5 w-5 text-valorant-red" />
@@ -432,7 +439,9 @@ export function TeamRosterManager({ initialTeams, tournamentId }: TeamRosterMana
             </div>
           </div>
         </div>
-      )}
+      </div>,
+      document.body
+    )}
     </div>
   );
 }

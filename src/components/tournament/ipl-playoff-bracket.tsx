@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import {
   IPLPlayoffStructure,
@@ -29,10 +30,15 @@ export function IPLPlayoffBracket({
   tournamentId,
 }: IPLPlayoffBracketProps) {
   const [playoffs, setPlayoffs] = useState<IPLPlayoffStructure | null>(initialPlayoffs);
+  const [mounted, setMounted] = useState(false);
   const [selectedMatch, setSelectedMatch] = useState<IPLPlayoffMatch | null>(null);
   const [scoreA, setScoreA] = useState(13);
   const [scoreB, setScoreB] = useState(9);
   const [winnerId, setWinnerId] = useState<string>("");
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   const [isUpdating, setIsUpdating] = useState(false);
 
   const handleRecordResult = async (matchCode: "Q1" | "EL" | "Q2" | "GF") => {
@@ -462,9 +468,10 @@ export function IPLPlayoffBracket({
       </div>
 
       {/* Result Verification Modal */}
-      {selectedMatch && selectedMatch.teamA && selectedMatch.teamB && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm">
-          <div className="bg-valorant-surface border-2 border-valorant-red max-w-md w-full p-6 space-y-4 val-chamfer shadow-2xl shadow-valorant-red/30">
+      {selectedMatch && selectedMatch.teamA && selectedMatch.teamB && mounted && createPortal(
+        <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="min-h-full flex items-center justify-center p-4">
+            <div className="bg-valorant-surface border-2 border-valorant-red max-w-md w-full p-6 space-y-4 val-chamfer shadow-2xl shadow-valorant-red/30 my-auto">
             <div className="flex items-center justify-between border-b border-valorant-border pb-3">
               <h3 className="text-xl font-display uppercase tracking-wider text-valorant-ivory flex items-center gap-2">
                 <Trophy className="h-5 w-5 text-valorant-gold" />
@@ -545,7 +552,9 @@ export function IPLPlayoffBracket({
             </div>
           </div>
         </div>
-      )}
+      </div>,
+      document.body
+    )}
     </div>
   );
 }

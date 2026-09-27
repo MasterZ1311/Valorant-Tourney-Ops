@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import { StoredIncident } from "@/lib/store/tournament-store";
 import { ShieldAlert, AlertTriangle, CheckCircle2, Clock, PlusCircle, X } from "lucide-react";
@@ -15,6 +16,7 @@ interface IncidentDeskProps {
 
 export function IncidentDesk({ initialIncidents, tournamentId }: IncidentDeskProps) {
   const [incidents, setIncidents] = useState<StoredIncident[]>(initialIncidents);
+  const [mounted, setMounted] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [category, setCategory] = useState("TECHNICAL");
   const [severity, setSeverity] = useState<"LOW" | "MEDIUM" | "HIGH" | "CRITICAL">("HIGH");
@@ -22,6 +24,10 @@ export function IncidentDesk({ initialIncidents, tournamentId }: IncidentDeskPro
   const [description, setDescription] = useState("");
   const [resolutionText, setResolutionText] = useState("");
   const [selectedIncident, setSelectedIncident] = useState<StoredIncident | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleReport = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -193,12 +199,13 @@ export function IncidentDesk({ initialIncidents, tournamentId }: IncidentDeskPro
       </TacticalCard>
 
       {/* Report Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 backdrop-blur-sm">
-          <form
-            onSubmit={handleReport}
-            className="bg-valorant-surface border-2 border-valorant-red max-w-md w-full p-6 space-y-4 val-chamfer shadow-2xl shadow-valorant-red/30"
-          >
+      {showCreateModal && mounted && createPortal(
+        <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="min-h-full flex items-center justify-center p-4">
+            <form
+              onSubmit={handleReport}
+              className="bg-valorant-surface border-2 border-valorant-red max-w-md w-full p-6 space-y-4 val-chamfer shadow-2xl shadow-valorant-red/30 my-auto"
+            >
             <div className="flex items-center justify-between border-b border-valorant-border pb-3">
               <h3 className="text-2xl font-display uppercase tracking-wider text-valorant-ivory">
                 Log Tournament Incident
@@ -294,12 +301,15 @@ export function IncidentDesk({ initialIncidents, tournamentId }: IncidentDeskPro
             </div>
           </form>
         </div>
-      )}
+      </div>,
+      document.body
+    )}
 
       {/* Resolution Modal */}
-      {selectedIncident && (
-        <div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-valorant-surface border-2 border-valorant-red max-w-md w-full p-6 space-y-4 val-chamfer shadow-2xl shadow-valorant-red/30">
+      {selectedIncident && mounted && createPortal(
+        <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="min-h-full flex items-center justify-center p-4">
+            <div className="bg-valorant-surface border-2 border-valorant-red max-w-md w-full p-6 space-y-4 val-chamfer shadow-2xl shadow-valorant-red/30 my-auto">
             <div className="flex items-center justify-between border-b border-valorant-border pb-3">
               <h3 className="text-xl font-display uppercase tracking-wider text-valorant-ivory">
                 Resolve Incident: {selectedIncident.id}
@@ -346,7 +356,9 @@ export function IncidentDesk({ initialIncidents, tournamentId }: IncidentDeskPro
             </div>
           </div>
         </div>
-      )}
+      </div>,
+      document.body
+    )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   Stage1ScheduleResult,
   Stage1MatchSlot,
@@ -33,11 +34,16 @@ export function Stage1SlotFixtureBoard({
   tournamentId,
 }: Stage1SlotFixtureBoardProps) {
   const [schedule, setSchedule] = useState<Stage1ScheduleResult | null>(initialSchedule);
+  const [mounted, setMounted] = useState(false);
   const [selectedMatch, setSelectedMatch] = useState<Stage1MatchSlot | null>(null);
   const [isScoreModalOpen, setIsScoreModalOpen] = useState(false);
   const [isSwapModalOpen, setIsSwapModalOpen] = useState(false);
   const [scoreA, setScoreA] = useState(13);
   const [scoreB, setScoreB] = useState(9);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   const [isUpdating, setIsUpdating] = useState(false);
 
   // Swap modal state
@@ -587,9 +593,10 @@ export function Stage1SlotFixtureBoard({
       </div>
 
       {/* Score Submission Modal */}
-      {isScoreModalOpen && selectedMatch && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm">
-          <div className="bg-valorant-surface border-2 border-valorant-red max-w-md w-full p-6 space-y-4 val-chamfer shadow-2xl shadow-valorant-red/30">
+      {isScoreModalOpen && selectedMatch && mounted && createPortal(
+        <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="min-h-full flex items-center justify-center p-4">
+            <div className="bg-valorant-surface border-2 border-valorant-red max-w-md w-full p-6 space-y-4 val-chamfer shadow-2xl shadow-valorant-red/30 my-auto">
             <div className="flex items-center justify-between border-b border-valorant-border pb-3">
               <h3 className="text-xl font-display uppercase tracking-wider text-valorant-ivory flex items-center gap-2">
                 <Award className="h-5 w-5 text-valorant-red" />
@@ -651,12 +658,15 @@ export function Stage1SlotFixtureBoard({
             </div>
           </div>
         </div>
-      )}
+      </div>,
+      document.body
+    )}
 
       {/* Team Swap Override Modal */}
-      {isSwapModalOpen && selectedMatch && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm">
-          <div className="bg-valorant-surface border-2 border-valorant-red max-w-md w-full p-6 space-y-4 val-chamfer shadow-2xl shadow-valorant-red/30">
+      {isSwapModalOpen && selectedMatch && mounted && createPortal(
+        <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="min-h-full flex items-center justify-center p-4">
+            <div className="bg-valorant-surface border-2 border-valorant-red max-w-md w-full p-6 space-y-4 val-chamfer shadow-2xl shadow-valorant-red/30 my-auto">
             <div className="flex items-center justify-between border-b border-valorant-border pb-3">
               <h3 className="text-xl font-display uppercase tracking-wider text-valorant-ivory flex items-center gap-2">
                 <ArrowRightLeft className="h-5 w-5 text-valorant-red" />
@@ -738,7 +748,9 @@ export function Stage1SlotFixtureBoard({
             </div>
           </div>
         </div>
-      )}
+      </div>,
+      document.body
+    )}
     </div>
   );
 }
