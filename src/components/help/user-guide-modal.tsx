@@ -28,6 +28,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { soundFX } from "@/lib/sound/audio";
 import { ValorantButton } from "../ui/valorant-button";
+import { cn } from "@/lib/utils";
 
 interface UserGuideModalProps {
   tournamentId?: string;
@@ -130,6 +131,7 @@ export function UserGuideModal({
   const steps = [
     {
       title: "1. Hardware & Physical Labs",
+      shortLabel: "Labs & PCs",
       subtitle: "Configure PCs, Labs, and Station boundaries",
       icon: Monitor,
       href: "/admin/venues",
@@ -144,6 +146,7 @@ export function UserGuideModal({
     },
     {
       title: "2. Team Rosters & Attendance",
+      shortLabel: "Rosters Desk",
       subtitle: "Verify Riot IDs and check in 5-player rosters",
       icon: Users,
       href: "/admin/teams",
@@ -158,6 +161,7 @@ export function UserGuideModal({
     },
     {
       title: "3. Stage 1 Match Radar",
+      shortLabel: "Stage 1 Radar",
       subtitle: "Scheduled fixtures & 4-station concurrent execution",
       icon: Calendar,
       href: "/admin/fixtures",
@@ -172,6 +176,7 @@ export function UserGuideModal({
     },
     {
       title: "4. Match Control & Attendance",
+      shortLabel: "Live Ops",
       subtitle: "Operate live matches with 1-click status transitions",
       icon: Activity,
       href: "/admin/matches",
@@ -186,6 +191,7 @@ export function UserGuideModal({
     },
     {
       title: "5. IPL 3-Place Playoff Decider",
+      shortLabel: "IPL Playoffs",
       subtitle: "Verified 1st, 2nd, and 3rd rank prizes",
       icon: Trophy,
       href: "/admin/bracket",
@@ -272,20 +278,21 @@ export function UserGuideModal({
             </div>
 
             {/* Sub-Navigation Tabs */}
-            <div className="flex border-b border-valorant-border bg-valorant-dark px-6 py-2 gap-2 overflow-x-auto font-mono text-xs">
+            <div className="flex border-b border-valorant-border bg-valorant-dark px-6 gap-1 font-mono text-xs overflow-x-auto">
               <button
                 onClick={() => {
                   soundFX.playClick();
                   setActiveTab("tour");
                 }}
-                className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors whitespace-nowrap val-chamfer-btn ${
+                className={cn(
+                  "relative flex items-center gap-1.5 px-4 py-2.5 text-xs font-heading font-bold uppercase tracking-wider transition-all border-b-2 whitespace-nowrap",
                   activeTab === "tour"
-                    ? "bg-valorant-red text-valorant-ivory"
-                    : "text-valorant-slate hover:text-valorant-ivory hover:bg-valorant-elevated"
-                }`}
+                    ? "border-valorant-red text-valorant-ivory bg-valorant-surface/40"
+                    : "border-transparent text-valorant-slate hover:text-valorant-ivory hover:border-valorant-border hover:bg-valorant-surface/20"
+                )}
               >
-                <Sparkles className="h-3.5 w-3.5" />
-                Quick-Start Walkthrough
+                <Sparkles className={cn("h-3.5 w-3.5", activeTab === "tour" ? "text-valorant-red" : "text-valorant-slate")} />
+                <span>Walkthrough</span>
               </button>
 
               <button
@@ -293,14 +300,15 @@ export function UserGuideModal({
                   soundFX.playClick();
                   setActiveTab("rules");
                 }}
-                className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors whitespace-nowrap val-chamfer-btn ${
+                className={cn(
+                  "relative flex items-center gap-1.5 px-4 py-2.5 text-xs font-heading font-bold uppercase tracking-wider transition-all border-b-2 whitespace-nowrap",
                   activeTab === "rules"
-                    ? "bg-valorant-red text-valorant-ivory"
-                    : "text-valorant-slate hover:text-valorant-ivory hover:bg-valorant-elevated"
-                }`}
+                    ? "border-valorant-red text-valorant-ivory bg-valorant-surface/40"
+                    : "border-transparent text-valorant-slate hover:text-valorant-ivory hover:border-valorant-border hover:bg-valorant-surface/20"
+                )}
               >
-                <ShieldCheck className="h-3.5 w-3.5" />
-                Tournament Invariants
+                <ShieldCheck className={cn("h-3.5 w-3.5", activeTab === "rules" ? "text-valorant-red" : "text-valorant-slate")} />
+                <span>Invariants</span>
               </button>
 
               <button
@@ -308,14 +316,15 @@ export function UserGuideModal({
                   soundFX.playClick();
                   setActiveTab("ipl");
                 }}
-                className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors whitespace-nowrap val-chamfer-btn ${
+                className={cn(
+                  "relative flex items-center gap-1.5 px-4 py-2.5 text-xs font-heading font-bold uppercase tracking-wider transition-all border-b-2 whitespace-nowrap",
                   activeTab === "ipl"
-                    ? "bg-valorant-red text-valorant-ivory"
-                    : "text-valorant-slate hover:text-valorant-ivory hover:bg-valorant-elevated"
-                }`}
+                    ? "border-valorant-red text-valorant-ivory bg-valorant-surface/40"
+                    : "border-transparent text-valorant-slate hover:text-valorant-ivory hover:border-valorant-border hover:bg-valorant-surface/20"
+                )}
               >
-                <Trophy className="h-3.5 w-3.5" />
-                IPL 3-Place Playoffs
+                <Trophy className={cn("h-3.5 w-3.5", activeTab === "ipl" ? "text-valorant-red" : "text-valorant-slate")} />
+                <span>IPL Playoffs</span>
               </button>
 
               <button
@@ -323,14 +332,15 @@ export function UserGuideModal({
                   soundFX.playClick();
                   setActiveTab("data");
                 }}
-                className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors whitespace-nowrap val-chamfer-btn ${
+                className={cn(
+                  "relative flex items-center gap-1.5 px-4 py-2.5 text-xs font-heading font-bold uppercase tracking-wider transition-all border-b-2 whitespace-nowrap",
                   activeTab === "data"
-                    ? "bg-valorant-red text-valorant-ivory"
-                    : "text-valorant-slate hover:text-valorant-ivory hover:bg-valorant-elevated"
-                }`}
+                    ? "border-valorant-red text-valorant-ivory bg-valorant-surface/40"
+                    : "border-transparent text-valorant-slate hover:text-valorant-ivory hover:border-valorant-border hover:bg-valorant-surface/20"
+                )}
               >
-                <RotateCcw className="h-3.5 w-3.5" />
-                Data Controls (Reset / Demo)
+                <RotateCcw className={cn("h-3.5 w-3.5", activeTab === "data" ? "text-valorant-red" : "text-valorant-slate")} />
+                <span>Data Tools</span>
               </button>
             </div>
 
@@ -352,7 +362,7 @@ export function UserGuideModal({
               {activeTab === "tour" && (
                 <div className="space-y-6">
                   {/* Step Indicators */}
-                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 font-mono">
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 font-mono">
                     {steps.map((s, idx) => {
                       const Icon = s.icon;
                       const isCurrent = currentStep === idx;
@@ -365,30 +375,32 @@ export function UserGuideModal({
                             soundFX.playClick();
                             setCurrentStep(idx);
                           }}
-                          className={`p-2.5 border text-left transition-all val-chamfer-btn ${
+                          className={cn(
+                            "p-2.5 border text-left transition-all val-chamfer-btn",
                             isCurrent
-                              ? "bg-valorant-elevated border-valorant-red shadow-md shadow-valorant-red/10"
+                              ? "bg-valorant-elevated border-valorant-red shadow-sm shadow-valorant-red/20 border-l-4 border-l-valorant-red"
                               : isDone
-                              ? "bg-valorant-surface border-valorant-mint/40 text-valorant-slate"
-                              : "bg-valorant-surface border-valorant-border text-valorant-slate"
-                          }`}
+                              ? "bg-valorant-surface border-valorant-mint/40 text-valorant-slate hover:border-valorant-mint hover:text-valorant-ivory"
+                              : "bg-valorant-surface/60 border-valorant-border text-valorant-slate hover:border-valorant-slate hover:text-valorant-ivory"
+                          )}
                         >
                           <div className="flex items-center justify-between mb-1">
                             <span className="text-[10px] font-bold">
-                              Step {idx + 1}
+                              STEP 0{idx + 1}
                             </span>
                             {isDone ? (
                               <CheckCircle2 className="h-3.5 w-3.5 text-valorant-mint" />
                             ) : (
                               <Icon
-                                className={`h-3.5 w-3.5 ${
+                                className={cn(
+                                  "h-3.5 w-3.5",
                                   isCurrent ? "text-valorant-red" : "text-valorant-slate"
-                                }`}
+                                )}
                               />
                             )}
                           </div>
-                          <div className="text-xs font-heading font-bold text-valorant-ivory truncate uppercase">
-                            {s.title.split(". ")[1]}
+                          <div className="text-xs font-heading font-bold text-valorant-ivory uppercase tracking-wide">
+                            {s.shortLabel}
                           </div>
                         </button>
                       );
