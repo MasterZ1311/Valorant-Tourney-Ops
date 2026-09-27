@@ -18,10 +18,10 @@ import {
   Download,
   Volume2,
   VolumeX,
+  BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AnnouncementModal } from "../operations/announcement-modal";
-import { UserGuideModal } from "../help/user-guide-modal";
 import { isAudioEnabled, toggleAudio, playButtonClick } from "@/lib/sound/audio";
 
 export function Navbar() {
@@ -130,11 +130,21 @@ export function Navbar() {
             )}
           </button>
 
-          {/* User Guide */}
-          <UserGuideModal
-            tournamentId="vto-tourney-1"
-            triggerVariant="navbar"
-          />
+          {/* User Guide Trigger */}
+          <button
+            onClick={() => {
+              playButtonClick();
+              window.dispatchEvent(new CustomEvent("vto:open-guide"));
+            }}
+            className="val-chamfer-btn h-8 flex items-center gap-1.5 px-2.5 text-[11px] font-heading font-bold uppercase tracking-wider bg-valorant-surface hover:bg-valorant-elevated text-valorant-slate hover:text-valorant-ivory border border-valorant-border hover:border-valorant-slate transition-all"
+            title="Open User & Operator Guide (Shortcut: ?)"
+          >
+            <BookOpen className="h-3.5 w-3.5 text-valorant-red" />
+            <span className="hidden sm:inline">Guide</span>
+            <span className="hidden xl:inline-block px-1 text-[9px] font-mono bg-valorant-dark text-valorant-slate border border-valorant-border">
+              ?
+            </span>
+          </button>
 
           {/* Announcement Desk */}
           <AnnouncementModal

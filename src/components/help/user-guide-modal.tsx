@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import {
   BookOpen,
@@ -40,11 +41,26 @@ export function UserGuideModal({
   triggerVariant = "navbar",
 }: UserGuideModalProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<"tour" | "rules" | "ipl" | "data">("tour");
   const [currentStep, setCurrentStep] = useState(0);
   const [isResetting, setIsResetting] = useState(false);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Global event listener to open guide from any button (e.g. navbar)
+  useEffect(() => {
+    const handleOpen = () => {
+      soundFX.playClick();
+      setIsOpen(true);
+    };
+    window.addEventListener("vto:open-guide", handleOpen);
+    return () => window.removeEventListener("vto:open-guide", handleOpen);
+  }, []);
 
   // Keyboard shortcut listener: Press '?' to toggle guide
   useEffect(() => {
@@ -242,9 +258,10 @@ export function UserGuideModal({
       )}
 
       {/* Guide Modal Backdrop & Dialog */}
-      {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-valorant-surface border-2 border-valorant-red max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden val-chamfer relative">
+      {isOpen && mounted && createPortal(
+        <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="min-h-full flex items-center justify-center p-3 sm:p-6">
+            <div className="bg-valorant-surface border-2 border-valorant-red max-w-4xl w-full max-h-[90vh] my-auto flex flex-col shadow-2xl overflow-hidden val-chamfer relative">
             {/* Modal Header */}
             <div className="bg-valorant-dark border-b border-valorant-border px-6 py-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -681,7 +698,9 @@ export function UserGuideModal({
             </div>
           </div>
         </div>
-      )}
+      </div>,
+      document.body
+    )}
     </>
   );
 }

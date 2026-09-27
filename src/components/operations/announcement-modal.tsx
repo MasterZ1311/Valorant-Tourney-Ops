@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { ANNOUNCEMENT_TEMPLATES } from "@/lib/announcements/templates";
 import { Megaphone, Copy, Check, X } from "lucide-react";
 import { playButtonClick } from "@/lib/sound/audio";
@@ -18,6 +19,11 @@ export function AnnouncementModal({
   triggerClassName,
 }: AnnouncementModalProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   const [selectedTemplate, setSelectedTemplate] = useState(ANNOUNCEMENT_TEMPLATES[0]);
   const [matchCode, setMatchCode] = useState("M01");
   const [teamA, setTeamA] = useState("Sentinels Academy");
@@ -75,9 +81,10 @@ export function AnnouncementModal({
         <span className="hidden xl:inline">Announce</span>
       </button>
 
-      {isOpen && (
-        <div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-valorant-surface border-2 border-valorant-red max-w-xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto val-chamfer shadow-2xl shadow-valorant-red/30">
+      {isOpen && mounted && createPortal(
+        <div className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-sm overflow-y-auto">
+          <div className="min-h-full flex items-center justify-center p-4">
+            <div className="bg-valorant-surface border-2 border-valorant-red max-w-xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto val-chamfer shadow-2xl shadow-valorant-red/30 my-auto">
             <div className="flex items-center justify-between border-b border-valorant-border pb-3">
               <h3 className="text-xl font-display uppercase tracking-wider text-valorant-ivory flex items-center gap-2">
                 <Megaphone className="h-5 w-5 text-valorant-red" />
@@ -175,7 +182,9 @@ export function AnnouncementModal({
             </div>
           </div>
         </div>
-      )}
-    </>
+      </div>,
+      document.body
+    )}
+  </>
   );
 }
