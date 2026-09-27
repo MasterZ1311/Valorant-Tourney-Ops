@@ -3,13 +3,20 @@
 import React, { useState } from "react";
 import { ANNOUNCEMENT_TEMPLATES } from "@/lib/announcements/templates";
 import { Megaphone, Copy, Check, X } from "lucide-react";
+import { playButtonClick } from "@/lib/sound/audio";
+import { ValorantButton } from "../ui/valorant-button";
 
 interface AnnouncementModalProps {
   tournamentName: string;
   venueName: string;
+  triggerClassName?: string;
 }
 
-export function AnnouncementModal({ tournamentName, venueName }: AnnouncementModalProps) {
+export function AnnouncementModal({
+  tournamentName,
+  venueName,
+  triggerClassName,
+}: AnnouncementModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState(ANNOUNCEMENT_TEMPLATES[0]);
   const [matchCode, setMatchCode] = useState("M01");
@@ -54,31 +61,38 @@ export function AnnouncementModal({ tournamentName, venueName }: AnnouncementMod
   return (
     <>
       <button
-        onClick={() => setIsOpen(true)}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold uppercase tracking-wider transition-colors"
+        onClick={() => {
+          playButtonClick();
+          setIsOpen(true);
+        }}
+        className={
+          triggerClassName ||
+          "val-chamfer-btn h-8 flex items-center gap-1.5 px-2.5 text-[11px] font-heading font-bold uppercase tracking-wider bg-valorant-surface hover:bg-valorant-elevated text-valorant-slate hover:text-valorant-ivory border border-valorant-border hover:border-valorant-slate transition-colors"
+        }
+        title="Broadcast Announcement Desk"
       >
-        <Megaphone className="h-3.5 w-3.5" />
-        Announcements
+        <Megaphone className="h-3.5 w-3.5 text-blue-400" />
+        <span className="hidden xl:inline">Announce</span>
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-          <div className="bg-[#17202a] border border-[#2b3844] rounded-xl max-w-xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-[#2b3844] pb-3">
-              <h3 className="text-base font-black text-white flex items-center gap-2">
-                <Megaphone className="h-5 w-5 text-[#ff4655]" />
+        <div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-valorant-surface border-2 border-valorant-red max-w-xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto val-chamfer shadow-2xl shadow-valorant-red/30">
+            <div className="flex items-center justify-between border-b border-valorant-border pb-3">
+              <h3 className="text-xl font-display uppercase tracking-wider text-valorant-ivory flex items-center gap-2">
+                <Megaphone className="h-5 w-5 text-valorant-red" />
                 Tournament Operations Broadcast Desk
               </h3>
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-1 rounded text-gray-400 hover:text-white"
+                className="p-1 text-valorant-slate hover:text-valorant-ivory"
               >
-                <X className="h-4 w-4" />
+                <X className="h-5 w-5" />
               </button>
             </div>
 
-            <div>
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">
+            <div className="font-mono text-xs">
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-valorant-slate mb-1">
                 Announcement Template
               </label>
               <select
@@ -87,7 +101,7 @@ export function AnnouncementModal({ tournamentName, venueName }: AnnouncementMod
                   const t = ANNOUNCEMENT_TEMPLATES.find((tpl) => tpl.id === e.target.value);
                   if (t) setSelectedTemplate(t);
                 }}
-                className="w-full bg-[#0f1923] border border-[#2b3844] rounded px-3 py-2 text-xs text-white"
+                className="w-full bg-valorant-dark border border-valorant-border px-3 py-2 text-xs text-valorant-ivory focus:border-valorant-red focus:outline-none"
               >
                 {ANNOUNCEMENT_TEMPLATES.map((tpl) => (
                   <option key={tpl.id} value={tpl.id}>
@@ -97,66 +111,67 @@ export function AnnouncementModal({ tournamentName, venueName }: AnnouncementMod
               </select>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 text-xs">
+            <div className="grid grid-cols-2 gap-3 text-xs font-mono">
               <div>
-                <label className="block text-[10px] font-bold text-gray-400 mb-0.5">Match Code</label>
+                <label className="block text-[10px] font-bold uppercase text-valorant-slate mb-0.5">Match Code</label>
                 <input
                   type="text"
                   value={matchCode}
                   onChange={(e) => setMatchCode(e.target.value)}
-                  className="w-full bg-[#0f1923] border border-[#2b3844] rounded px-2.5 py-1 text-white"
+                  className="w-full bg-valorant-dark border border-valorant-border px-2.5 py-1 text-valorant-ivory focus:border-valorant-red focus:outline-none"
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-gray-400 mb-0.5">Station & Lab</label>
+                <label className="block text-[10px] font-bold uppercase text-valorant-slate mb-0.5">Station & Lab</label>
                 <input
                   type="text"
                   value={stationName}
                   onChange={(e) => setStationName(e.target.value)}
-                  className="w-full bg-[#0f1923] border border-[#2b3844] rounded px-2.5 py-1 text-white"
+                  className="w-full bg-valorant-dark border border-valorant-border px-2.5 py-1 text-valorant-ivory focus:border-valorant-red focus:outline-none"
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-gray-400 mb-0.5">Team A</label>
+                <label className="block text-[10px] font-bold uppercase text-valorant-slate mb-0.5">Team A</label>
                 <input
                   type="text"
                   value={teamA}
                   onChange={(e) => setTeamA(e.target.value)}
-                  className="w-full bg-[#0f1923] border border-[#2b3844] rounded px-2.5 py-1 text-white"
+                  className="w-full bg-valorant-dark border border-valorant-border px-2.5 py-1 text-valorant-ivory focus:border-valorant-red focus:outline-none"
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-gray-400 mb-0.5">Team B</label>
+                <label className="block text-[10px] font-bold uppercase text-valorant-slate mb-0.5">Team B</label>
                 <input
                   type="text"
                   value={teamB}
                   onChange={(e) => setTeamB(e.target.value)}
-                  className="w-full bg-[#0f1923] border border-[#2b3844] rounded px-2.5 py-1 text-white"
+                  className="w-full bg-valorant-dark border border-valorant-border px-2.5 py-1 text-valorant-ivory focus:border-valorant-red focus:outline-none"
                 />
               </div>
             </div>
 
             {/* Generated Preview */}
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">
+              <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-valorant-slate mb-1">
                 Rendered Broadcast Message
               </label>
-              <div className="bg-[#0f1923] border border-[#2b3844] rounded-lg p-3.5 text-xs text-gray-200 font-mono whitespace-pre-wrap leading-relaxed">
+              <div className="bg-valorant-dark border border-valorant-border p-3.5 text-xs text-valorant-ivory font-mono whitespace-pre-wrap leading-relaxed">
                 {renderedContent}
               </div>
             </div>
 
             <div className="flex items-center justify-between pt-2">
-              <span className="text-[10px] text-gray-500">
+              <span className="text-[10px] font-mono text-valorant-slate">
                 Ready for Discord, WhatsApp, or LAN PA announcement.
               </span>
-              <button
+              <ValorantButton
                 onClick={handleCopy}
-                className="flex items-center gap-1.5 px-4 py-2 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold uppercase tracking-wider transition-colors shadow-md shadow-emerald-600/20"
+                variant="primary"
+                size="sm"
               >
-                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                {copied ? <Check className="h-4 w-4 mr-1.5" /> : <Copy className="h-4 w-4 mr-1.5" />}
                 {copied ? "Copied to Clipboard!" : "Copy Announcement"}
-              </button>
+              </ValorantButton>
             </div>
           </div>
         </div>

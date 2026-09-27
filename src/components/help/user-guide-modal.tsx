@@ -209,12 +209,12 @@ export function UserGuideModal({
             soundFX.playClick();
             setIsOpen(true);
           }}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-heading font-bold uppercase tracking-wider bg-valorant-red hover:bg-valorant-redDark text-valorant-ivory transition-all val-chamfer-btn shadow-md shadow-valorant-red/20"
+          className="val-chamfer-btn h-8 flex items-center gap-1.5 px-2.5 text-[11px] font-heading font-bold uppercase tracking-wider bg-valorant-surface hover:bg-valorant-elevated text-valorant-slate hover:text-valorant-ivory border border-valorant-border hover:border-valorant-slate transition-all"
           title="Open User & Operator Guide (Shortcut: ?)"
         >
-          <BookOpen className="h-3.5 w-3.5" />
+          <BookOpen className="h-3.5 w-3.5 text-valorant-red" />
           <span>Guide</span>
-          <span className="hidden xl:inline-block px-1 py-0.2 text-[9px] font-mono bg-black/40 text-valorant-ivory">
+          <span className="hidden xl:inline-block px-1 text-[9px] font-mono bg-valorant-dark text-valorant-slate border border-valorant-border">
             ?
           </span>
         </button>
