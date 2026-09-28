@@ -1,9 +1,9 @@
-# BRIEFING — 2026-09-26T05:27:00Z
+﻿# BRIEFING — 2026-09-26T05:27:00Z
 
 ## Mission
 Empirically challenge and stress-test the implementations of Milestone 1 (Foundation, Schema, Seed) and Milestone 2 (Domain Engine: Round Robin, Tiebreakers, Group Stage).
 
-## 🔒 My Identity
+##  My Identity
 - Archetype: EMPIRICAL CHALLENGER
 - Roles: critic, specialist
 - Working directory: e:/Github/Valorant Brackets/.agents/teamwork/challenger_1
@@ -11,7 +11,7 @@ Empirically challenge and stress-test the implementations of Milestone 1 (Founda
 - Milestone: Milestone 1 & 2 Verification & Stress Testing
 - Instance: 1 of 1
 
-## 🔒 Key Constraints
+##  Key Constraints
 - Review-only — do NOT modify implementation code directly
 - Run verification code empirically; do not trust unverified claims
 - In .agents/teamwork/, only store agent metadata (BRIEFING, progress, handoff, dispatch)

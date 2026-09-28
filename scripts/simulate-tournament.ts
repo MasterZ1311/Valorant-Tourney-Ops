@@ -16,11 +16,11 @@ import { Participant, BracketStructure } from "../src/lib/tournament/types";
 import { DomainLab, DomainPC, DomainStation } from "../src/lib/scheduling/types";
 
 console.log("===============================================================");
-console.log("🎯 VTO — TOURNAMENT SIMULATION ENGINE (13 TEAMS, 40 PCs)");
+console.log("VTO - TOURNAMENT SIMULATION ENGINE (13 TEAMS, 40 PCs)");
 console.log("===============================================================\n");
 
 // 1. Create Tournament & Teams
-console.log("📍 STEP 1: Creating Tournament & Registering 13 Teams (5 players each)...");
+console.log("[STEP 1] Creating Tournament & Registering 13 Teams (5 players each)...");
 const TEAM_NAMES = [
   "Sentinels Academy",
   "Fnatic Rising",
@@ -55,11 +55,11 @@ const teams: SimTeam[] = TEAM_NAMES.map((name, i) => ({
   })),
 }));
 
-console.log(`✓ 13 Teams registered with ${teams.length * 5} total players.`);
-console.log(`✓ All 13 teams checked in at registration desk.\n`);
+console.log(`[PASS] 13 Teams registered with ${teams.length * 5} total players.`);
+console.log(`[PASS] All 13 teams checked in at registration desk.\n`);
 
 // 2. Configure Labs & Stations
-console.log("📍 STEP 2: Configuring Physical Labs & Hardware...");
+console.log("[STEP 2] Configuring Physical Labs & Hardware...");
 console.log("   - Lab 1: 30 PCs across 3 Stations (PCs 1-10, 11-20, 21-30)");
 console.log("   - Lab 2: 10 PCs across 1 Station (PCs 31-40)");
 
@@ -116,7 +116,7 @@ const lab1 = buildLab("lab-1", "Alpha Computing Hall", 1, 30, 3);
 const lab2 = buildLab("lab-2", "Bravo Esports Suite", 31, 10, 1);
 const venueMetrics = calculateVenueCapacity([lab1, lab2]);
 
-console.log(`✓ Venue Calculated Capacity:`);
+console.log(`[PASS] Venue Calculated Capacity:`);
 console.log(`  - Total Working PCs: ${venueMetrics.totalWorkingPCs}`);
 console.log(`  - Configured Stations: ${venueMetrics.totalStations}`);
 console.log(`  - Operational Stations: ${venueMetrics.operationalStations}`);
@@ -127,19 +127,19 @@ if (venueMetrics.maxSimultaneousMatches !== 4) {
 }
 
 // 3. Generate Bracket
-console.log("📍 STEP 3: Generating Single Elimination Bracket...");
+console.log("[STEP 3] Generating Single Elimination Bracket...");
 let bracket: BracketStructure = generateSingleEliminationBracket(teams);
 
-console.log(`✓ Bracket Size: ${bracket.bracketSize}`);
-console.log(`✓ Total Rounds: ${bracket.totalRounds}`);
-console.log(`✓ Total BYEs: ${bracket.totalBYEs}`);
+console.log(`[PASS] Bracket Size: ${bracket.bracketSize}`);
+console.log(`[PASS] Total Rounds: ${bracket.totalRounds}`);
+console.log(`[PASS] Total BYEs: ${bracket.totalBYEs}`);
 console.log(`  - Round 1: ${bracket.rounds[0].name} (${bracket.rounds[0].matches.length} matches: 5 played, 3 BYEs)`);
 console.log(`  - Round 2: ${bracket.rounds[1].name} (${bracket.rounds[1].matches.length} matches)`);
 console.log(`  - Round 3: ${bracket.rounds[2].name} (${bracket.rounds[2].matches.length} matches)`);
 console.log(`  - Round 4: ${bracket.rounds[3].name} (${bracket.rounds[3].matches.length} match)\n`);
 
 // 4. Generate Fixtures
-console.log("📍 STEP 4: Generating Hardware-Constrained Fixtures...");
+console.log("[STEP 4] Generating Hardware-Constrained Fixtures...");
 const allStations = [...lab1.stations, ...lab2.stations];
 const scheduling = generateFixtures(bracket, allStations, {
   tournamentStartTime: "2026-10-15T09:00:00.000Z",
@@ -147,16 +147,16 @@ const scheduling = generateFixtures(bracket, allStations, {
   bufferDurationMinutes: 15,
 });
 
-console.log(`✓ Total Playable Matches Scheduled: ${scheduling.totalMatchesScheduled}`);
-console.log(`✓ Estimated Tournament End Time: ${scheduling.estimatedTournamentEndTime}`);
-console.log(`✓ Fixture Conflicts Detected: ${scheduling.conflicts.length}\n`);
+console.log(`[PASS] Total Playable Matches Scheduled: ${scheduling.totalMatchesScheduled}`);
+console.log(`[PASS] Estimated Tournament End Time: ${scheduling.estimatedTournamentEndTime}`);
+console.log(`[PASS] Fixture Conflicts Detected: ${scheduling.conflicts.length}\n`);
 
 if (scheduling.conflicts.length > 0) {
   throw new Error(`Scheduling conflicts detected: ${scheduling.conflicts.join(", ")}`);
 }
 
 // 5. Pre-Finalization Validation
-console.log("📍 STEP 5: Running Pre-Finalization Validation Pipeline...");
+console.log("[STEP 5] Running Pre-Finalization Validation Pipeline...");
 const validation = runPreFinalizationValidation({
   tournament: { id: "tourney-1", name: "Campus VALORANT Invitational", status: "READY" },
   teams,
@@ -167,9 +167,9 @@ const validation = runPreFinalizationValidation({
   requireFullAttendance: true,
 });
 
-console.log(`✓ Pre-Finalization Status: ${validation.overallPassed ? "PASS" : "FAIL"}`);
+console.log(`[PASS] Pre-Finalization Status: ${validation.overallPassed ? "PASS" : "FAIL"}`);
 validation.checks.forEach((chk) => {
-  const symbol = chk.passed ? "✓" : "✗";
+  const symbol = chk.passed ? "[PASS]" : "[FAIL]";
   console.log(`  ${symbol} [${chk.category}] ${chk.name}: ${chk.message}`);
 });
 
@@ -177,10 +177,10 @@ if (!validation.canFinalize) {
   throw new Error("Validation pipeline failed before tournament finalization!");
 }
 
-console.log("\n🔒 TOURNAMENT FINALIZED — ALL FIXTURES & ROSTERS LOCKED\n");
+console.log("\n[LOCKED] TOURNAMENT FINALIZED — ALL FIXTURES & ROSTERS LOCKED\n");
 
 // 6. Live Tournament Match Simulation
-console.log("📍 STEP 6: Simulating Live Tournament Rounds & Incident Handling...\n");
+console.log("[STEP 6] Simulating Live Tournament Rounds & Incident Handling...\n");
 
 const incidents: { id: string; category: string; description: string; resolved: boolean }[] = [];
 
@@ -190,7 +190,7 @@ for (let rIndex = 0; rIndex < bracket.rounds.length; rIndex++) {
 
   for (const match of round.matches) {
     if (match.isBye) {
-      console.log(`  ⏩ ${match.code}: ${match.teamA?.name} received BYE -> Auto-Advanced`);
+      console.log(`  [BYE] ${match.code}: ${match.teamA?.name} received BYE -> Auto-Advanced`);
       continue;
     }
 
@@ -207,7 +207,7 @@ for (let rIndex = 0; rIndex < bracket.rounds.length; rIndex++) {
 
     // Simulate incident on Round 1, Match 2 (e.g. M02)
     if (round.roundNumber === 1 && match.matchNumber === 2) {
-      console.log(`  ⚠️  INCIDENT: Technical pause on ${match.code} — Audio headset disconnect on PC-14.`);
+      console.log(`  [INCIDENT] Technical pause on ${match.code} — Audio headset disconnect on PC-14.`);
       match.status = "PAUSED";
       incidents.push({
         id: "inc-1",
@@ -216,7 +216,7 @@ for (let rIndex = 0; rIndex < bracket.rounds.length; rIndex++) {
         resolved: true,
       });
       match.status = "LIVE";
-      console.log(`  ✅ INCIDENT RESOLVED: Headset replaced. Match resumed.`);
+      console.log(`  [RESOLVED] Headset replaced. Match resumed.`);
     }
 
     // Determine deterministic simulated winner based on higher seed
@@ -236,7 +236,7 @@ for (let rIndex = 0; rIndex < bracket.rounds.length; rIndex++) {
     match.loserId = loser.id;
 
     console.log(
-      `  🎮 ${match.code}: ${match.teamA.name} (${scoreA}) vs (${scoreB}) ${match.teamB.name} => Winner: ${winner.name}`
+      `  [MATCH] ${match.code}: ${match.teamA.name} (${scoreA}) vs (${scoreB}) ${match.teamB.name} => Winner: ${winner.name}`
     );
 
     // Advance winner in bracket
@@ -251,10 +251,10 @@ const champion = teams.find((t) => t.id === grandFinal.winnerId);
 const runnerUp = teams.find((t) => t.id === grandFinal.loserId);
 
 console.log("===============================================================");
-console.log("🏆 TOURNAMENT COMPLETED — FINAL RESULTS");
+console.log("[STATUS] TOURNAMENT COMPLETED — FINAL RESULTS");
 console.log("===============================================================");
-console.log(`🥇 CHAMPION:   ${champion?.name} (Seed #${champion?.seed})`);
-console.log(`🥈 RUNNER UP:  ${runnerUp?.name} (Seed #${runnerUp?.seed})`);
-console.log(`📊 TOTAL INCIDENTS LOGGED & RESOLVED: ${incidents.length}`);
-console.log(`🔒 AUDIT INTEGRITY: ALL MATCHES VERIFIED BEFORE ADVANCEMENT`);
+console.log(`[CHAMPION]   ${champion?.name} (Seed #${champion?.seed})`);
+console.log(`[RUNNER-UP]  ${runnerUp?.name} (Seed #${runnerUp?.seed})`);
+console.log(`[INCIDENTS]  Total incidents logged and resolved: ${incidents.length}`);
+console.log(`[AUDIT]      Integrity verified: all matches verified before advancement`);
 console.log("===============================================================\n");

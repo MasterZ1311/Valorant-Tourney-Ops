@@ -83,10 +83,10 @@ This document governs the engineering standards, architecture, and operational r
 ---
 
 ### 7. Forbidden Shortcuts
-- ❌ NO hardcoding lab count, PC count, or station sizes.
-- ❌ NO hardcoding tournament brackets or team slots in React JSX.
-- ❌ NO dividing total PC count by 10 without checking station and lab boundaries.
-- ❌ NO advancing brackets on unverified scores.
-- ❌ NO client-only permission checks.
-- ❌ NO raw SQL or unvalidated JSON input.
-- ❌ NO placeholder "TODO" in critical paths.
+- [PROHIBITED] Hardcoding lab count, PC count, or station sizes.
+- [PROHIBITED] Hardcoding tournament brackets or team slots in React JSX.
+- [PROHIBITED] Dividing total PC count by 10 without checking station and lab boundaries.
+- [PROHIBITED] Advancing brackets on unverified scores.
+- [PROHIBITED] Client-only permission checks.
+- [PROHIBITED] Raw SQL or unvalidated JSON input.
+- [PROHIBITED] Placeholder "TODO" in critical paths.

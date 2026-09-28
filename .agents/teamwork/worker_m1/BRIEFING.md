@@ -1,16 +1,16 @@
-# BRIEFING — 2026-09-26T05:16:30+05:30
+﻿# BRIEFING — 2026-09-26T05:16:30+05:30
 
 ## Mission
 Implement Milestone 1: Database Architecture, Prisma Schema Enhancements, Dev Tournament Seed, Database Utilities, and Comprehensive Tests.
 
-## 🔒 My Identity
+##  My Identity
 - Archetype: worker_m1
 - Roles: implementer, qa, specialist
 - Working directory: e:/Github/Valorant Brackets/.agents/teamwork/worker_m1/
 - Original parent: befb317e-b934-479d-b1ff-ba849504a902
 - Milestone: Milestone 1 — Database Architecture & Dev Tournament Seed
 
-## 🔒 Key Constraints
+##  Key Constraints
 - Exclusively own: `prisma/schema.prisma`, `prisma/seed.ts`, `src/lib/db-utils.ts`, `tests/db/database.test.ts`.
 - Do NOT edit files in `src/lib/tournament/`, `src/lib/scheduling/`, or `src/app/`.
 - Adhere to GEMINI.md invariants (relational integrity, transactions, audit logs, soft deletion).

@@ -1,16 +1,16 @@
-# BRIEFING — 2026-09-26T05:06:00Z
+﻿# BRIEFING — 2026-09-26T05:06:00Z
 
 ## Mission
 Investigate QA, test infrastructure, simulation scripts, and current build/lint/test health for Tasks 7 and 8.
 
-## 🔒 My Identity
+##  My Identity
 - Archetype: explorer
 - Roles: QA & Testing Investigator, System Health Auditor, Synthesis
 - Working directory: e:/Github/Valorant Brackets/.agents/teamwork/survey_explorer_3/
 - Original parent: befb317e-b934-479d-b1ff-ba849504a902
 - Milestone: Survey Tasks 7 & 8 (QA, Test Infrastructure, Simulation, Health Check)
 
-## 🔒 Key Constraints
+##  Key Constraints
 - Read-only investigation — do NOT implement
 - Do NOT modify any source code or test files outside working directory
 - Provide concrete evidence chain with line numbers and file paths

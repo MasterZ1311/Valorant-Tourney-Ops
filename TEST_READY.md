@@ -108,14 +108,14 @@ Test Files  1 passed (1)
 Executing `npm run simulate`:
 ```
 ===============================================================
-🎯 VTO — TOURNAMENT SIMULATION ENGINE (13 TEAMS, 40 PCs)
+VTO - TOURNAMENT SIMULATION ENGINE (13 TEAMS, 40 PCs)
 ===============================================================
-✓ 13 Teams registered with 65 total players.
-✓ All 13 teams checked in at registration desk.
-✓ Venue Calculated Capacity: 4 max simultaneous matches
-✓ Bracket valid: 16 slots, 4 rounds, 3 BYE(s)
-✓ All 15 matches mapped to stations and time slots
-✓ Incident resolved: Audio headset replaced on PC-14
-🏆 TOURNAMENT COMPLETED — FINAL RESULTS
-🥇 CHAMPION: Sentinels Academy (Seed #1)
+[PASS] 13 Teams registered with 65 total players.
+[PASS] All 13 teams checked in at registration desk.
+[PASS] Venue Calculated Capacity: 4 max simultaneous matches
+[PASS] Bracket valid: 16 slots, 4 rounds, 3 BYE(s)
+[PASS] All 15 matches mapped to stations and time slots
+[PASS] Incident resolved: Audio headset replaced on PC-14
+TOURNAMENT COMPLETED - FINAL RESULTS
+CHAMPION: Sentinels Academy (Seed #1)
 ```

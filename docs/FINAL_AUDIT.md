@@ -52,22 +52,24 @@ The **13-Team Acceptance Scenario** (13 teams, 65 players, 40 PCs across 2 asymm
 ```
  RUN  v2.1.9 E:/Github/Valorant Brackets
 
- ✓ tests/unit/round-robin.test.ts (10 tests)
- ✓ tests/integration/acceptance-scenario.test.ts (1 test)
- ✓ tests/integration/e2e-requirements.test.ts (76 tests)
- ✓ tests/integration/api-rbac.test.ts (12 tests)
- ✓ tests/unit/adversarial-empirical.test.ts (50 tests)
- ✓ tests/unit/group-stage.test.ts (6 tests)
- ✓ tests/unit/bracket-engine.test.ts (21 tests)
- ✓ tests/unit/scheduling-engine.test.ts (3 tests)
- ✓ tests/unit/rbac.test.ts (6 tests)
- ✓ tests/unit/validator.test.ts (2 tests)
- ✓ tests/db/database.test.ts (39 tests)
- ✓ tests/unit/state-machine.test.ts (7 tests)
- ✓ tests/unit/empirical-challenge.test.ts (19 tests)
+ PASS tests/unit/round-robin.test.ts (10 tests)
+ PASS tests/integration/acceptance-scenario.test.ts (1 test)
+ PASS tests/integration/e2e-requirements.test.ts (76 tests)
+ PASS tests/integration/api-rbac.test.ts (12 tests)
+ PASS tests/unit/adversarial-empirical.test.ts (50 tests)
+ PASS tests/unit/group-stage.test.ts (6 tests)
+ PASS tests/unit/bracket-engine.test.ts (21 tests)
+ PASS tests/unit/stage1-fixtures.test.ts (5 tests)
+ PASS tests/unit/ipl-playoffs.test.ts (5 tests)
+ PASS tests/unit/scheduling-engine.test.ts (3 tests)
+ PASS tests/unit/rbac.test.ts (6 tests)
+ PASS tests/unit/validator.test.ts (2 tests)
+ PASS tests/db/database.test.ts (39 tests)
+ PASS tests/unit/state-machine.test.ts (7 tests)
+ PASS tests/unit/empirical-challenge.test.ts (19 tests)
 
- Test Files  13 passed (13)
-      Tests  252 passed (252)
+ Test Files  15 passed (15)
+      Tests  262 passed (262)
 ```
 
 - **Typecheck (`npx tsc --noEmit`)**: 0 errors.

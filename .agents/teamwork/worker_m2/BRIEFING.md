@@ -1,16 +1,16 @@
-# BRIEFING — 2026-09-26T05:18:30Z
+﻿# BRIEFING — 2026-09-26T05:18:30Z
 
 ## Mission
 Implement Milestone 2 — Tournament Domain Engine: Round Robin (Berger Cyclic Pairing & Tiebreakers), Group Stage (Snake Seeding & Crossover Knockout), Validator Check #10, and unit tests.
 
-## 🔒 My Identity
+##  My Identity
 - Archetype: implementer
 - Roles: implementer, qa, specialist
 - Working directory: e:/Github/Valorant Brackets/.agents/teamwork/worker_m2
 - Original parent: befb317e-b934-479d-b1ff-ba849504a902
 - Milestone: Milestone 2 — Tournament Domain Engine
 
-## 🔒 Key Constraints
+##  Key Constraints
 - Pure TypeScript domain engine, zero React or direct DB dependencies.
 - Berger Cyclic Pairing Algorithm for both even and odd team counts (using dummy BYE) with balanced home/away sides.
 - Points: 3 points for standard win, 1 point for OT win, 0 for loss.

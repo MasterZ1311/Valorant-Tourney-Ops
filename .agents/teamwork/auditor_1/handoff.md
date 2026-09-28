@@ -1,4 +1,4 @@
-# Forensic Audit Report & Handoff — Milestone 1 & Milestone 2
+﻿# Forensic Audit Report & Handoff — Milestone 1 & Milestone 2
 
 **Agent**: Forensic Auditor (`auditor_1`)  
 **Date**: 2026-09-26T05:25:00+05:30  
@@ -161,7 +161,7 @@ To independently reproduce this forensic verification:
    ```powershell
    npx prisma generate
    ```
-   *Expected*: `✔ Generated Prisma Client (v5.22.0) to .\node_modules\@prisma\client`
+   *Expected*: ` Generated Prisma Client (v5.22.0) to .\node_modules\@prisma\client`
 
 2. **TypeScript Compilation Check**:
    ```powershell
@@ -191,7 +191,7 @@ To independently reproduce this forensic verification:
    ```powershell
    npm run simulate
    ```
-   *Expected*: Clean execution from Step 1 to Step 6, Step 5 validates Check #10, and prints `🏆 TOURNAMENT COMPLETED — FINAL RESULTS`.
+   *Expected*: Clean execution from Step 1 to Step 6, Step 5 validates Check #10, and prints ` TOURNAMENT COMPLETED — FINAL RESULTS`.
 
 7. **Prisma Seed Script Validation**:
    ```powershell

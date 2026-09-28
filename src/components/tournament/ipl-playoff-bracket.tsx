@@ -391,7 +391,7 @@ export function IPLPlayoffBracket({
         {/* Column 3: Grand Final */}
         <div className="space-y-6">
           <div className="text-xs font-mono font-bold uppercase tracking-wider text-valorant-slate flex items-center gap-2">
-            <span className="text-valorant-gold">★</span> PLAYOFF ROUND 3 (GRAND FINAL)
+            <Trophy className="h-3.5 w-3.5 text-valorant-gold" /> PLAYOFF ROUND 3 (GRAND FINAL)
           </div>
 
           <div

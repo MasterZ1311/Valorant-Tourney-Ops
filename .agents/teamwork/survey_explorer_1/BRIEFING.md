@@ -1,16 +1,16 @@
-# BRIEFING — 2026-09-25T23:37:00Z
+﻿# BRIEFING — 2026-09-25T23:37:00Z
 
 ## Mission
 Investigate authoritative sources and existing codebase for Tasks 1, 2, and 3 (Database Architecture, Tournament Domain Engine, Physical Tournament Scheduling Engine) and produce a detailed gap analysis and feature inventory report.
 
-## 🔒 My Identity
+##  My Identity
 - Archetype: Specification Miner
 - Roles: Teamwork specialist, Domain Explorer, Spec Miner
 - Working directory: e:/Github/Valorant Brackets/.agents/teamwork/survey_explorer_1/
 - Original parent: befb317e-b934-479d-b1ff-ba849504a902
 - Milestone: Phase 1 - Survey & Specification Mining
 
-## 🔒 Key Constraints
+##  Key Constraints
 - READ-ONLY investigation: Do NOT modify any files outside working directory `e:/Github/Valorant Brackets/.agents/teamwork/survey_explorer_1/`.
 - Do NOT write source code or modify existing tests in the main project.
 - Follow GEMINI.md system principles, invariants, and coding standards.

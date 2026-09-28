@@ -1,9 +1,9 @@
-# BRIEFING — 2026-09-25T23:49:07Z
+﻿# BRIEFING — 2026-09-25T23:49:07Z
 
 ## Mission
 Independently challenge, empirically fuzz, and stress-test boundary conditions and invariants for Milestone 1 (Tournament Domain Engine & Data Schema) and Milestone 2 (Scheduling & Conflict Engine + Pre-Flight Check) of VTO. Deliver an empirical verdict (APPROVE or REQUEST_CHANGES).
 
-## 🔒 My Identity
+##  My Identity
 - Archetype: EMPIRICAL CHALLENGER
 - Roles: critic, specialist
 - Working directory: e:/Github/Valorant Brackets/.agents/teamwork/challenger_2
@@ -11,7 +11,7 @@ Independently challenge, empirically fuzz, and stress-test boundary conditions a
 - Milestone: Milestone 1 & 2 Independent Fuzzing & Adversarial Verification
 - Instance: 1 of 1
 
-## 🔒 Key Constraints
+##  Key Constraints
 - Review-only — do NOT modify implementation code (`src/`, `prisma/schema.prisma`).
 - Empirical challenger mandate: MUST run verification code directly; do NOT trust logs or claims without reproduction.
 - Follow GEMINI.md tournament and scheduling invariants strictly.

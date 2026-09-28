@@ -1,16 +1,16 @@
-# BRIEFING — 2026-09-26T05:16:00Z
+﻿# BRIEFING — 2026-09-26T05:16:00Z
 
 ## Mission
 Design and implement the complete E2E Testing Track (Tiers 1-4), create TEST_INFRA.md and TEST_READY.md, and verify tests pass cleanly with Vitest.
 
-## 🔒 My Identity
+##  My Identity
 - Archetype: test-writer
 - Roles: specialist, qa
 - Working directory: e:/Github/Valorant Brackets/.agents/teamwork/test_writer_e2e
 - Original parent: befb317e-b934-479d-b1ff-ba849504a902
 - Milestone: E2E Testing Track (Tiers 1-4)
 
-## 🔒 Key Constraints
+##  Key Constraints
 - Write and modify test code and test doc artifacts only: TEST_INFRA.md, TEST_READY.md, tests/integration/e2e-requirements.test.ts (or tests/e2e/**)
 - Do NOT edit implementation source code files in src/ or prisma/
 - Genuine opaque-box test implementations derived from user requirements and GEMINI.md invariants

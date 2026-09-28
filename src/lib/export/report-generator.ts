@@ -147,13 +147,13 @@ Status:           ${t.status}
 Format:           ${t.format}
 
 ------------------------------------------------------------------------
-🏆 CHAMPIONSHIP STANDINGS
+FINAL CHAMPIONSHIP STANDINGS
 ------------------------------------------------------------------------
-🥇 CHAMPION:     ${championTeam ? `${championTeam.name} (Seed #${championTeam.seed})` : "TBD"}
-🥈 RUNNER-UP:    ${runnerUpTeam ? `${runnerUpTeam.name} (Seed #${runnerUpTeam.seed})` : "TBD"}
+CHAMPION:     ${championTeam ? `${championTeam.name} (Seed #${championTeam.seed})` : "TBD"}
+RUNNER-UP:    ${runnerUpTeam ? `${runnerUpTeam.name} (Seed #${runnerUpTeam.seed})` : "TBD"}
 
 ------------------------------------------------------------------------
-📊 STATISTICAL SUMMARY
+OPERATIONAL & STATISTICAL SUMMARY
 ------------------------------------------------------------------------
 Total Registered Teams:   ${data.teams.length}
 Total Starting Players:   ${data.teams.length * 5}
@@ -165,7 +165,7 @@ Total Incidents Logged:   ${data.incidents.length}
 Total Incidents Resolved: ${data.incidents.filter((i) => i.status === "RESOLVED").length}
 
 ------------------------------------------------------------------------
-🎮 MATCH OUTCOMES & FIXTURES
+MATCH OUTCOMES & FIXTURES
 ------------------------------------------------------------------------
 ${data.fixtures
   .map(

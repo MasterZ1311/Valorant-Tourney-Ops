@@ -1,4 +1,4 @@
-# Comprehensive Investigation Report: QA, Test Infrastructure, Simulation & System Health (Tasks 7 & 8)
+﻿# Comprehensive Investigation Report: QA, Test Infrastructure, Simulation & System Health (Tasks 7 & 8)
 
 **Author**: Survey Explorer 3 (QA, Testing & System Health Specialist)  
 **Date**: 2026-09-26  
@@ -153,7 +153,7 @@ The following 11 defects were identified during the codebase inspection:
 ### [DEFECT-01] Critical Invariant Violation: Volunteer UI Bypasses Score Verification
 - **Severity**: CRITICAL
 - **Location**: `src/app/volunteer/page.tsx:65-82` & `src/app/api/tournaments/[id]/bracket/route.ts:18-28`
-- **Violated Rule**: GEMINI.md Rule 3 ("Match Status: ... LIVE -> FINISHED -> RESULT_PENDING -> VERIFIED... Only VERIFIED results trigger winner advancement in the bracket") & Rule 7 ("❌ NO advancing brackets on unverified scores").
+- **Violated Rule**: GEMINI.md Rule 3 ("Match Status: ... LIVE -> FINISHED -> RESULT_PENDING -> VERIFIED... Only VERIFIED results trigger winner advancement in the bracket") & Rule 7 (" NO advancing brackets on unverified scores").
 - **Current Behavior**: When a volunteer clicks "Submit Score" on mobile, the frontend directly calls `POST /api/tournaments/[id]/bracket` with `{ action: "ADVANCE", matchId, winnerId, scoreA, scoreB }`, which immediately advances the bracket.
 - **Expected Behavior**: Volunteer submission must set status to `RESULT_PENDING`. Only a user with role `RESULTS_OFFICIAL` or `SUPER_ADMIN` reviewing the result can verify and trigger `advanceBracketWinner`.
 

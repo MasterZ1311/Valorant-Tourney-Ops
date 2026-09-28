@@ -1,16 +1,16 @@
-# BRIEFING — 2026-09-25T23:30:15Z
+﻿# BRIEFING — 2026-09-25T23:30:15Z
 
 ## Mission
 Coordinate and monitor execution of the 8 VTO production tasks through Project Orchestrator, enforce liveness and progress crons, and supervise Victory Audit before completion.
 
-## 🔒 My Identity
+##  My Identity
 - Archetype: sentinel
 - Working directory: e:/Github/Valorant Brackets/.agents/teamwork
 - Orchestrator: TBD
 - Victory Auditor: to be spawned on victory claim
 - Active Orchestrator ID: befb317e-b934-479d-b1ff-ba849504a902
 
-## 🔒 Key Constraints
+##  Key Constraints
 - No technical decisions — relay only
 - Victory Audit is MANDATORY before reporting completion
 - Keep context ultra-light

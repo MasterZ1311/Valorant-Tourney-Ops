@@ -1,9 +1,9 @@
-# BRIEFING — 2026-09-26T05:25:00+05:30
+﻿# BRIEFING — 2026-09-26T05:25:00+05:30
 
 ## Mission
 Conduct a thorough, adversarial quality review and integrity verification of Milestone 1 (Database Architecture & Seed) and Milestone 2 (Tournament Domain Engine) deliverables for the VALORANT Tournament Operations System (VTO).
 
-## 🔒 My Identity
+##  My Identity
 - Archetype: reviewer_critic
 - Roles: reviewer, critic
 - Working directory: e:/Github/Valorant Brackets/.agents/teamwork/reviewer_1/
@@ -11,7 +11,7 @@ Conduct a thorough, adversarial quality review and integrity verification of Mil
 - Milestone: Milestone 1 & Milestone 2 Review
 - Instance: 1 of 1
 
-## 🔒 Key Constraints
+##  Key Constraints
 - Review-only — do NOT modify implementation code
 - Actively check for integrity violations: hardcoded test results, facade implementations, shortcuts, fabricated verification, self-certifying work.
 - If ANY integrity violation is found, verdict MUST be REQUEST_CHANGES with Critical finding tagged as INTEGRITY VIOLATION.

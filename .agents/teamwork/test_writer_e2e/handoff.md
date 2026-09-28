@@ -1,4 +1,4 @@
-# 5-Component Handoff Report — E2E Testing Track (Tiers 1–4)
+﻿# 5-Component Handoff Report — E2E Testing Track (Tiers 1–4)
 
 **Agent**: test_writer_e2e  
 **Role**: E2E Test Writer (QA & Specialist)  
@@ -24,7 +24,7 @@
   ```
   RUN  v2.1.9 E:/Github/Valorant Brackets
 
-  ✓ tests/integration/e2e-requirements.test.ts (76 tests) 69ms
+   tests/integration/e2e-requirements.test.ts (76 tests) 69ms
 
   Test Files  1 passed (1)
        Tests  76 passed (76)

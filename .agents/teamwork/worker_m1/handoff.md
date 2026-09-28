@@ -1,4 +1,4 @@
-# Handoff Report — Milestone 1: Database Architecture & Dev Tournament Seed
+﻿# Handoff Report — Milestone 1: Database Architecture & Dev Tournament Seed
 
 **Author**: Worker M1  
 **Timestamp**: 2026-09-26T05:17:00+05:30  
@@ -34,7 +34,7 @@
      - `Player`: `@@unique([teamId, riotId, riotTag])`
    - Added soft deletion `deletedAt DateTime?` and `@@index([deletedAt])` to `Tournament`, `Team`, `Player`, `Match`, and `PC`.
    - Recompiled Prisma client with `npx prisma generate` (Exit code: 0):
-     `✔ Generated Prisma Client (v5.22.0) to .\node_modules\@prisma\client in 674ms`
+     ` Generated Prisma Client (v5.22.0) to .\node_modules\@prisma\client in 674ms`
 
 2. **`src/lib/db-utils.ts` Implemented**:
    - `runInTransaction<T>`: High-level wrapper over `prisma.$transaction` with optional timeout, maxWait, and isolation level options.
@@ -66,7 +66,7 @@
      - JSON serialization and storage in `createAuditLogEntry`.
      - Soft deletion and restoration functions for Tournament, Team, Player, Match, and PC.
      - Full validation of the 13-team dev seed dataset (hardware invariants, player counts, unique tags/names).
-   - Test execution result: `✓ tests/db/database.test.ts (39 tests) 233ms - 39 passed (39)`.
+   - Test execution result: ` tests/db/database.test.ts (39 tests) 233ms - 39 passed (39)`.
 
 ---
 
@@ -106,7 +106,7 @@ To independently verify the implementation:
    ```powershell
    npx prisma generate
    ```
-   *Expected*: `✔ Generated Prisma Client (v5.22.0) to .\node_modules\@prisma\client`
+   *Expected*: ` Generated Prisma Client (v5.22.0) to .\node_modules\@prisma\client`
 
 2. **TypeScript Compilation**:
    ```powershell

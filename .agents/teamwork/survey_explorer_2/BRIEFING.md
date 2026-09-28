@@ -1,16 +1,16 @@
-# BRIEFING — 2026-09-25T23:40:00Z
+﻿# BRIEFING — 2026-09-25T23:40:00Z
 
 ## Mission
 Investigate authoritative sources and existing codebase for Tasks 4 (Admin Dashboard & Setup), 5 (Tournament-Day Operations), and 6 (Auth & Security), producing a comprehensive gap analysis and specification mining report.
 
-## 🔒 My Identity
+##  My Identity
 - Archetype: Specification Miner / Teamwork specialist
 - Roles: Survey Explorer 2
 - Working directory: e:/Github/Valorant Brackets/.agents/teamwork/survey_explorer_2/
 - Original parent: befb317e-b934-479d-b1ff-ba849504a902
 - Milestone: Discovery / Specification Mining Phase
 
-## 🔒 Key Constraints
+##  Key Constraints
 - READ-ONLY investigation: Do NOT modify any files outside working directory (`.agents/teamwork/survey_explorer_2/`).
 - Do NOT write source code or modify existing tests.
 - Prioritize authoritative sources (`ORIGINAL_REQUEST.md`, `GEMINI.md`, `docs/`) over LLM prior knowledge.

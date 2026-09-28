@@ -1,9 +1,9 @@
-# BRIEFING — 2026-09-25T23:54:00Z
+﻿# BRIEFING — 2026-09-25T23:54:00Z
 
 ## Mission
 Independently review and stress-test the deliverables of Milestone 1 (Database Architecture & Seed) and Milestone 2 (Tournament Domain Engine), verifying correctness, invariants, edge cases, and integrity, culminating in an evidence-based verdict (`APPROVE` or `REQUEST_CHANGES`).
 
-## 🔒 My Identity
+##  My Identity
 - Archetype: reviewer_and_critic
 - Roles: reviewer, critic
 - Working directory: e:/Github/Valorant Brackets/.agents/teamwork/reviewer_2
@@ -11,7 +11,7 @@ Independently review and stress-test the deliverables of Milestone 1 (Database A
 - Milestone: Review of Milestone 1 & Milestone 2
 - Instance: 2 of 2 (Reviewer 2)
 
-## 🔒 Key Constraints
+##  Key Constraints
 - Review-only — do NOT modify implementation code or test files outside reviewer directory
 - Strictly inspect for integrity violations (hardcoded values, facade logic, shortcuts, fabricated verification)
 - Verify compliance with GEMINI.md invariants (physical resources, PC checks, scheduling, state machines)
