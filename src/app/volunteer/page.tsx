@@ -121,7 +121,7 @@ export default function VolunteerOperationsPage() {
   const nextMatches = playableMatches.filter((m) => m.matchId !== currentMatch?.matchId && m.status === "SCHEDULED");
 
   return (
-    <div className="max-w-md mx-auto min-h-screen bg-valorant-dark val-grid-bg text-valorant-ivory flex flex-col justify-between pb-8">
+    <div className="max-w-md mx-auto min-h-screen bg-transparent text-valorant-ivory flex flex-col justify-between pb-8">
       {/* Mobile Top Header */}
       <header className="sticky top-0 z-40 bg-valorant-dark/95 backdrop-blur border-b border-valorant-border px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2.5">

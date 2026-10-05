@@ -45,7 +45,7 @@ export default function DisplayProjectorPage({
 
   if (!data) {
     return (
-      <div className="min-h-screen bg-valorant-dark text-valorant-ivory flex flex-col items-center justify-center font-mono">
+      <div className="min-h-screen bg-transparent text-valorant-ivory flex flex-col items-center justify-center font-mono">
         <div className="relative w-16 h-16 mb-4 animate-pulse">
           <Image
             src="/images/valorant_v_logo.svg"
@@ -70,7 +70,7 @@ export default function DisplayProjectorPage({
   const iplRankings = data.iplPlayoffs?.rankings;
 
   return (
-    <div className="min-h-screen bg-valorant-dark text-valorant-ivory p-4 md:p-8 flex flex-col justify-between select-none val-grid-bg">
+    <div className="min-h-screen bg-transparent text-valorant-ivory p-4 md:p-8 flex flex-col justify-between select-none">
       {/* Top TV VCT Broadcast Header */}
       <header className="flex flex-wrap items-center justify-between border-b border-valorant-border pb-6 gap-4">
         <div className="flex items-center gap-4">

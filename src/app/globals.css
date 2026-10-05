@@ -79,7 +79,6 @@ body {
 }
 
 .val-grid-bg {
-  background-color: #0F1923;
   background-image: radial-gradient(rgba(236, 232, 225, 0.07) 1px, transparent 1px);
   background-size: 24px 24px;
 }
